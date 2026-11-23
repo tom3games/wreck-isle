@@ -1,0 +1,55 @@
+- snd/boom1.mp3: File:Explosion-LS100155.ogg / Fg2 / Public domain
+- snd/boom2.mp3: File:Explosion 10.ogg / tcpp / Public domain
+- snd/boom3.mp3: File:Explosions-LS100150.ogg / Fg2 / Public domain
+- snd/boom4.mp3: File:Explosions-LS100152.ogg / Fg2 / Public domain
+- snd/gull1.mp3: File:Gull 2.ogg / avphillips / Public domain
+- snd/gull2.mp3: File:Western Gull Golden Gate National Recreation Area.ogg / National Park Service / Public domain
+- snd/step1.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/step2.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/wstep1.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/wstep2.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/clink1.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/clink2.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/clink3.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/water.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/pin.mp3: Gun reload, lock or click sound / pauliuw / CC0
+- snd/wind.mp3: Wind / IgnasD / CC0
+- snd/thud.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/glass1.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/glass2.mp3: 100 CC0 SFX #2 / rubberduck / CC0
+- snd/engine.mp3: racing car engine sound loops / domasx2 / CC0
+- snd/punch1.mp3: 75 CC0 breaking / falling / hit sfx（bfh1_hit_05）/ rubberduck / CC0
+- snd/punch2.mp3: 75 CC0 breaking / falling / hit sfx（bfh1_hit_03）/ rubberduck / CC0
+- 地雷の「カチッ」は snd/pin.mp3（上と同じ素材）を鳴らし直して使っている。耳鳴りの素材は無く、音は全体を 1.2秒こもらせるだけ（js/sfx.js の muffle）
+- assets/models/an2/an2.fbx・An2Tex.png（輸送機）: An-2 airplane lowpoly / mokalux / CC0（https://opengameart.org/content/an-2-airplane-lowpoly）。OpenGameArt の CC0 検索で選んだ。Poly Pizza の飛行機は CC-BY が中心だったので使わない
+- vendor/jsm/loaders/FBXLoader.js・curves/NURBSCurve.js・NURBSUtils.js・libs/fflate.module.js: three.js（MIT）の同梱アドオン
+- snd/plane.wav: Helicopter over a lake（9.5〜16.5秒を継ぎ目なしループにした物）/ ezwa / Public domain（輸送機のエンジンに輸送ヘリの録音を流用。プロペラ機の録音は手元に無い）
+- snd/fall.wav: Howling wind（66〜81秒をループにした物）/ Tvabutzku1234 / CC0（落下中の風切り）
+- snd/chute.mp3: 50 RPG sound effects（cloth1）/ Kenney / CC0（傘が開く音）
+- snd/crash1.mp3: 100 CC0 SFX / rubberduck / CC0
+- snd/crash2.mp3: 100 CC0 SFX / rubberduck / CC0
+- snd/crash3.mp3: 100 CC0 SFX / rubberduck / CC0
+- snd/crash4.mp3: 100 CC0 SFX / rubberduck / CC0
+- snd/debris1.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/debris2.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/hitl1.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/hitl2.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/hitl3.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/boxbreak.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/roll1.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/roll2.mp3: 75 CC0 breaking / falling / hit sfx / rubberduck / CC0
+- snd/spear.mp3: 50 RPG sound effects / Kenney / CC0
+- snd/latch.mp3: 50 RPG sound effects / Kenney / CC0
+- snd/repair1.mp3: 100 CC0 SFX / rubberduck / CC0
+- snd/repair2.mp3: 100 CC0 SFX / rubberduck / CC0
+- snd/tick.mp3: 51 UI sound effects (buttons, switches and clicks) / Kenney / CC0
+- snd/jet.mp3: Air whoosh / pyranostudios / CC0
+- snd/magnet.mp3: File:AT&T copper fan small box.ogg / Ranch9613 / CC0
+- snd/horn.mp3: File:Car Horn.wav / 15HPanska_Ruttner_Jan / CC0
+- snd/win.mp3: 85 Short music jingles / Kenney / CC0
+- snd/lose.mp3: 85 Short music jingles / Kenney / CC0
+- snd/siren.mp3: File:Singapore Public Warning System siren.ogg / Seloloving / CC0
+- models/car_lite.glb: "Car Concept" by Eric Chadwick / Darmstadt Graphics Group（Khronos glTF Sample Assets）CC BY 4.0。BREAK THE ROUTE で軽くした物（ロゴを外し面を減らした）
+- sky/sky_*.webp: Poly Haven の HDRI をトーンマップした画像（CC0。BREAK THE ROUTE と同じ）
+- 車の形（js/btrcar.js）: BREAK THE ROUTE の手続きの車の作り方を流用
+- snd/siren.mp3: Singapore Public Warning System siren / Seloloving / CC0（Wikimedia Commons）

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>WRECK ISLE｜車で壊し合うバトロワ・無料のブラウザゲーム</title>
+<script id="ghMove">if(location.hostname==='tom3games.github.io'){location.replace('https://tom3games.com/play/wreck-isle/'+location.search+location.hash)}</script>
+<link rel="canonical" href="https://tom3games.com/play/wreck-isle/">
+<meta name="description" content="車で壊し合うバトロワの無料ブラウザゲーム。輸送機から島に飛び降り、軽トラ・ダンプ・バス・スポーツカーなど6種の車を奪って体当たり。横や後ろから当てるほど壊れる。ガソリン切れや火が出たら飛び降りて乗り換え。ダウンロードなしでスマホでも遊べる。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="WRECK ISLE 車で壊し合うバトロワ">
+<meta property="og:description" content="島に飛び降りて車を奪い、体当たりで壊し合う。乗ったまま爆発したら負け。">
+<meta property="og:image" content="https://tom3games.com/play/wreck-isle/og.png">
+<meta property="og:url" content="https://tom3games.com/play/wreck-isle/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d0f12">
+<meta name="wi-pub" content="1">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=mwteurh3">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
+<script>
+  window.addEventListener('error', e => { const el = document.getElementById('err'); if (el && !window.__fiReady) { el.textContent = '起動に失敗しました: ' + (e.message || e); el.style.display = 'block' } })
+  // 拡大させない（iOS）
+  for (const n of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(n, e => e.preventDefault(), { passive: false })
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault() }, { passive: false })
+  let lastTouch = 0; document.addEventListener('touchend', e => { const n = Date.now(); if (n - lastTouch < 350) e.preventDefault(); lastTouch = n }, { passive: false })
+  document.addEventListener('wheel', e => { if (e.ctrlKey) e.preventDefault() }, { passive: false })
+</script>
+</head>
+<body>
+<div id="view"></div>
+<div id="raidtint"></div>
+
+<div id="loading"><div class="lt">WRECK ISLE</div><div class="lb"><i id="loadbar"></i></div></div>
+<div id="err"></div>
+
+<section id="title">
+  <div class="logo">
+    <h1>WRECK<br>ISLE</h1>
+    <p class="tape"><span>ぶつけて壊せ。乗ったまま爆発したら負け。</span></p>
+  </div>
+  <div class="how">
+    <dl class="pc">
+      <dt>A D ← →</dt><dd>ハンドル（アクセルは踏みっぱなし）</dd>
+      <dt>S ↓</dt><dd>バック</dd>
+      <dt>Space</dt><dd>アイテムを使う（歩きの時は跳ぶ）</dd>
+      <dt>Shift</dt><dd>車でジャンプ（上から落ちると踏みつけ）</dd>
+      <dt>F</dt><dd>輸送機から飛び降りる・傘を開く・車を降りる・空いている車に乗る（歩きは WASD）</dd>
+      <dt>M</dt><dd>島の地図</dd>
+    </dl>
+    <dl class="tp">
+      <dt>左下</dt><dd>ハンドル（アクセルは踏みっぱなし）</dd>
+      <dt>R</dt><dd>押すたびに前進とバックを切り替え</dd>
+      <dt>右下</dt><dd>アイテムを使う・その上でジャンプ</dd>
+      <dt>ドア</dt><dd>飛び降りる・傘・車を降りる・空いている車に乗る（歩きは左手で動かす）</dd>
+    </dl>
+    <p class="note">横と後ろからの体当たりはよく壊れる。正面同士は痛み分け。輸送機から好きな所で飛び降りて、島に置いてある軽トラに乗り込んで始まる。ガソリンは走るほど減る。赤い缶と給油所で足せる。車が爆発する時に乗っていたら負け。火が出たら飛び降りて、空いている車を探せ。歩いている人は無力。</p>
+    <button id="start">はじめる</button>
+    <p class="cred">スポーツカーの模型: Car Concept（Eric Chadwick / Darmstadt Graphics Group, CC BY 4.0）</p>
+  </div>
+</section>
+
+<section id="hud">
+  <div class="tl"><b id="alive">11</b><span>台</span></div>
+  <ul id="feed"></ul>
+  <div id="zone"></div>
+  <div id="dropx"></div>
+  <button id="jumpb" aria-label="ジャンプ"><svg viewBox="0 0 48 48"><path d="M14 22l10-10 10 10" fill="none" stroke="#f4efe6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="11" y="30" width="26" height="9" rx="2" fill="none" stroke="#f4efe6" stroke-width="3"/><circle cx="17" cy="40" r="2.5" fill="#f4efe6"/><circle cx="31" cy="40" r="2.5" fill="#f4efe6"/></svg><kbd>Shift</kbd></button>
+  <button id="mapb" aria-label="地図"><svg viewBox="0 0 48 48"><path d="M6 12l11-4 14 4 11-4v28l-11 4-14-4-11 4z" fill="none" stroke="#f4efe6" stroke-width="3" stroke-linejoin="round"/><path d="M17 8v28M31 12v28" stroke="#f4efe6" stroke-width="2.5"/></svg><kbd>M</kbd></button>
+  <svg id="dmg" viewBox="0 0 40 80" data-st="0"><path class="b" d="M8 6h24a4 4 0 0 1 4 4v22H4V10a4 4 0 0 1 4-4z"/><path class="g" d="M8 12h24v8H8z"/><path class="b" d="M5 35h30v39a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path class="l" d="M9 41h22M9 49h22M9 57h22M9 65h22"/></svg>
+  <svg id="fuel" viewBox="0 0 60 40"><path class="arc" d="M8 34a22 22 0 0 1 44 0"/><path class="red" d="M8 34a22 22 0 0 1 4.6-13.5"/><text x="3" y="40">E</text><text x="51" y="40">F</text><g class="nd"><path d="M30 34V14"/></g><circle cx="30" cy="34" r="3"/><path class="pump" d="M25 22h6v9h-6zM31 24l3 2v4"/></svg>
+  <div id="foot"></div><div id="stick"><i></i></div>
+  <div id="spd"><b>0</b><span>km/h</span><i></i></div>
+  <div id="count"></div>
+  <div id="toast"></div>
+  <div id="spec">観戦中</div>
+  <div class="pad">
+    <button id="tl" class="arrow" aria-label="左"><svg viewBox="0 0 48 48"><path d="M30 10L14 24l16 14" /></svg></button>
+    <button id="tr" class="arrow" aria-label="右"><svg viewBox="0 0 48 48"><path d="M18 10l16 14-16 14" /></svg></button>
+  </div>
+  <button id="gear" aria-label="前進とバック"><svg viewBox="0 0 40 64"><rect class="slot" x="15" y="6" width="10" height="52" rx="5"/><text class="d" x="33" y="16">D</text><text class="r" x="33" y="56">R</text><circle class="knob" cx="20" cy="17" r="11"/></svg></button>
+  <button id="door" aria-label="乗る・降りる"><svg viewBox="0 0 48 48"><path class="fr" d="M10 40V12a3 3 0 0 1 3-3h14l9 9v22z"/><path class="wn" d="M14 13h12l6 6v3H14z"/><path class="hd" d="M27 27h6"/></svg><span class="nm"></span><kbd>F</kbd></button>
+  <button id="use" aria-label="アイテム"><span class="ic"></span><span class="nm"></span><kbd>Space</kbd></button>
+</section>
+
+<section id="result">
+  <div class="card">
+    <p class="rank"></p>
+    <p class="sub"></p>
+    <p class="st"></p>
+    <button id="again">もう一回</button>
+  </div>
+</section>
+
+<script src="js/sfx.js"></script>
+<script type="module" src="js/wreck.js?v=mwteurh3"></script>
+<script src="support.js?v=mwteurh3"></script>
+</body>
+</html>

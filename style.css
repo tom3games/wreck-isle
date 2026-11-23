@@ -1,0 +1,160 @@
+[hidden]{display:none!important}
+:root{--ink:#f4efe6;--dim:rgba(244,239,230,.66);--amber:#ffb357;--hz:#e0b021;--red:#e2533c;--sh:0 1px 2px rgba(0,0,0,.7),0 0 14px rgba(0,0,0,.35)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{touch-action:manipulation}
+html,body{height:100%;overflow:hidden;background:#0d0f12;color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans",sans-serif;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+#view,#view canvas{position:fixed;inset:0;display:block}
+#view canvas{touch-action:none}
+#err{display:none;position:fixed;left:12px;right:12px;bottom:12px;background:#3b1410;color:#fff;padding:10px 12px;font-size:13px;z-index:99;border-radius:4px}
+
+#loading{position:fixed;inset:0;background:#0d0f12;display:grid;place-content:center;gap:18px;z-index:50;transition:opacity .6s}
+#loading.done{opacity:0;pointer-events:none}
+#loading .lt{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:44px;letter-spacing:.08em;text-align:center}
+#loading .lb{width:240px;height:2px;background:rgba(255,255,255,.12);overflow:hidden}
+#loading .lb i{display:block;height:100%;background:var(--hz);transform:scaleX(0);transform-origin:left;transition:transform .4s}
+
+/* タイトル: 左下に大きな題、右に遊び方。スマホ縦は上下に積む */
+#title{position:fixed;inset:0;height:100svh;display:grid;grid-template-columns:1fr minmax(280px,380px);align-items:end;padding:6vh 6vw;gap:32px;z-index:20;background:linear-gradient(90deg,rgba(8,10,12,0) 30%,rgba(8,10,12,.66));transition:opacity .5s;overflow:hidden}
+#title.gone{opacity:0;pointer-events:none}
+#title h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:clamp(76px,12vw,176px);line-height:.8;letter-spacing:.01em;text-shadow:0 4px 30px rgba(0,0,0,.45)}
+.tape{display:inline-block;margin-top:18px;padding:7px 16px 7px 14px;font-weight:900;font-size:clamp(15px,1.7vw,21px);letter-spacing:.08em;color:#171715;background:repeating-linear-gradient(-45deg,var(--hz) 0 18px,#1b1b19 18px 26px);transform:rotate(-1.5deg)}
+.tape span{background:var(--hz);padding:2px 8px;box-decoration-break:clone}
+#title .how{font-size:13px;line-height:1.5;text-shadow:var(--sh)}
+#title dl{display:grid;grid-template-columns:auto 1fr;gap:3px 14px}
+#title dt{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;color:var(--hz);letter-spacing:.04em}
+#title .tp{display:none}
+#title .note{margin-top:14px;color:var(--dim)}
+#start{margin-top:22px;font-weight:900;font-size:19px;letter-spacing:.3em;padding:15px 46px 15px 50px;border:0;background:var(--hz);color:#171715;cursor:pointer;box-shadow:0 4px 0 #8a6a10}
+#start:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a10}
+
+#hud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:10;text-shadow:var(--sh)}
+#hud.on{opacity:1}
+#hud .tl{position:absolute;top:calc(6px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:13px;color:var(--dim)}
+#hud .tl b{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:34px;color:var(--ink);margin-right:3px}
+#feed{position:absolute;top:calc(110px + env(safe-area-inset-top));right:16px;text-align:right;list-style:none;font-size:12px;line-height:1.6;color:var(--ink);max-width:62vw}
+#zone{position:absolute;top:calc(48px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);font-size:13px;color:var(--dim);white-space:nowrap}
+#zone.warn{color:var(--amber);font-weight:700}
+#dmg{position:absolute;top:calc(20px + env(safe-area-inset-top));right:72px;width:22px;height:44px;overflow:visible}
+#dmg .b{fill:var(--c,#e9ebea);stroke:rgba(0,0,0,.5);stroke-width:2;transition:fill .3s}
+#dmg .g{fill:rgba(20,24,26,.8)}
+#dmg .l{stroke:rgba(0,0,0,.35);stroke-width:2;fill:none}
+#dmg[data-st="1"]{--c:#d9c98a}#dmg[data-st="2"]{--c:#d98a3a}#dmg[data-st="3"]{--c:#d6452c;animation:blink .5s steps(2) infinite}#dmg[data-st="4"]{--c:#2a2826}
+@keyframes blink{50%{opacity:.45}}
+#count{position:absolute;left:0;right:0;top:30%;text-align:center;font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:clamp(72px,14vw,140px);opacity:0;transition:opacity .15s}
+#count.on{opacity:1}
+#toast{position:absolute;left:0;right:0;top:24%;text-align:center;font-weight:900;font-size:clamp(22px,4vw,40px);letter-spacing:.06em;color:var(--ink);opacity:0;transform:scale(1.25)}
+#toast.show{animation:tst .9s ease-out forwards}
+@keyframes tst{0%{opacity:0;transform:scale(1.35)}12%{opacity:1;transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(1)}}
+#spec{position:absolute;left:0;right:0;bottom:calc(34px + env(safe-area-inset-bottom));text-align:center;font-size:14px;color:var(--dim);opacity:0}
+#spec.on{opacity:1}
+
+/* 操作ボタン（指で触る画面だけ） */
+.pad,#gear{display:none}
+#use{position:absolute;right:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:92px;height:92px;border-radius:50%;border:2px solid rgba(244,239,230,.35);background:rgba(16,18,18,.45);pointer-events:auto;display:grid;place-items:center;touch-action:none;transition:border-color .2s,background .2s}
+#use .ic{width:58px;height:58px;display:block}
+#use .ic svg{width:100%;height:100%;display:block}
+#use .nm{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;white-space:nowrap}
+#use kbd{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-size:13px;color:var(--dim)}
+#use.has{border-color:var(--hz);background:rgba(60,46,10,.55);box-shadow:0 0 0 4px rgba(224,176,33,.18)}
+#use.roll .ic{opacity:.75}
+#use.act{border-color:#8fc7ff;box-shadow:0 0 0 5px rgba(143,199,255,.25)}
+@media (pointer:coarse){
+  #title .pc{display:none}#title .tp{display:grid}
+  #use kbd{display:none}
+  .pad{display:flex;gap:14px;position:absolute;left:16px;bottom:calc(22px + env(safe-area-inset-bottom));pointer-events:auto}
+  .arrow{width:86px;height:86px;border-radius:22px;border:2px solid rgba(244,239,230,.3);background:rgba(16,18,18,.42);display:grid;place-items:center;touch-action:none}
+  .arrow svg{width:46px;height:46px}.arrow path{fill:none;stroke:var(--ink);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+  .arrow.on{background:rgba(244,239,230,.25);border-color:var(--ink)}
+  #gear{display:block;position:absolute;right:128px;bottom:calc(30px + env(safe-area-inset-bottom));width:54px;height:84px;border:0;background:none;pointer-events:auto;touch-action:none}
+  #gear svg{width:100%;height:100%;overflow:visible}
+  #gear .slot{fill:rgba(16,18,18,.55);stroke:rgba(244,239,230,.4);stroke-width:2}
+  #gear .knob{fill:#d9d4c8;stroke:#1b1b19;stroke-width:2;transition:cy .15s}
+  #gear text{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:13px;fill:var(--dim)}
+  #gear .d{fill:var(--ink)}
+  #gear.on .knob{cy:47px;fill:var(--amber)}
+  #gear.on .d{fill:var(--dim)}#gear.on .r{fill:var(--amber)}
+}
+@media (max-width:700px){
+  #title{grid-template-columns:1fr;align-content:end;padding:7svh 22px calc(26px + env(safe-area-inset-bottom));gap:22px;background:linear-gradient(180deg,rgba(8,10,12,0) 20%,rgba(8,10,12,.72) 62%)}
+  #title h1{font-size:clamp(68px,22vw,110px)}
+  #start{width:100%;padding-left:0;padding-right:0}
+  #zone{top:calc(44px + min(31vh, 40vw) + 14px + env(safe-area-inset-top));left:18px;transform:none;font-size:12px}
+  #feed{top:calc(96px + env(safe-area-inset-top));font-size:11px;max-width:52vw}
+}
+
+#result{position:fixed;inset:0;display:grid;place-items:center;background:rgba(8,10,12,.5);opacity:0;pointer-events:none;transition:opacity .4s;z-index:30}
+#result.show{opacity:1;pointer-events:auto}
+#result .card{text-align:center;padding:0 24px}
+#result .rank{font-family:"Barlow Condensed","Zen Kaku Gothic New",sans-serif;font-weight:800;font-size:clamp(56px,11vw,120px);line-height:1;text-shadow:0 4px 24px rgba(0,0,0,.5)}
+#result .sub{margin-top:14px;font-size:17px;font-weight:700}
+#result .st{margin-top:6px;font-size:14px;color:var(--dim)}
+#again{margin-top:30px;font-weight:900;font-size:18px;letter-spacing:.24em;padding:14px 44px 14px 48px;border:0;background:var(--hz);color:#171715;cursor:pointer;box-shadow:0 4px 0 #8a6a10}
+#again:active{transform:translateY(3px);box-shadow:0 1px 0 #8a6a10}
+
+#fuel{position:absolute;top:calc(68px + env(safe-area-inset-top));right:14px;width:46px;height:31px;overflow:visible;--a:60deg}
+#fuel .arc{fill:none;stroke:rgba(244,239,230,.75);stroke-width:3}
+#fuel .red{fill:none;stroke:var(--red);stroke-width:3}
+#fuel text{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:10px;fill:var(--dim)}
+#fuel .nd{transform-origin:30px 34px;transform:rotate(var(--a));transition:transform .3s}
+#fuel .nd path{stroke:var(--amber);stroke-width:2.5;stroke-linecap:round}
+#fuel circle{fill:var(--ink)}
+#fuel .pump{fill:none;stroke:rgba(244,239,230,.5);stroke-width:1.5}
+#fuel.low .nd path{stroke:var(--red)}#fuel.low{animation:blink .6s steps(2) infinite}
+#fuel.none{opacity:.25}
+#door{position:absolute;right:30px;bottom:calc(150px + env(safe-area-inset-bottom));width:66px;height:66px;border-radius:16px;border:2px solid rgba(244,239,230,.35);background:rgba(16,18,18,.45);pointer-events:auto;display:none;place-items:center;touch-action:none}
+#door.on{display:grid}
+#door[data-m="in"]{border-color:var(--hz);background:rgba(60,46,10,.6);box-shadow:0 0 0 4px rgba(224,176,33,.2)}
+#door svg{width:38px;height:38px}
+#door .fr{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}#door .wn{fill:rgba(244,239,230,.35)}#door .hd{stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+#door .nm{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:700;white-space:nowrap}
+#door kbd{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-size:13px;color:var(--dim)}
+#foot,#stick{display:none}
+#hud.foot #use{opacity:.3}
+@media (pointer:coarse){
+  #door kbd{display:none}
+  #hud.foot .pad,#hud.foot #gear{display:none}
+  #hud.foot #foot{display:block;position:absolute;left:0;bottom:0;width:62%;height:55%;pointer-events:auto;touch-action:none}
+  #stick{position:absolute;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;border:2px solid rgba(244,239,230,.4);background:rgba(16,18,18,.3)}
+  #stick.on{display:block}
+  #stick i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:rgba(244,239,230,.75)}
+}
+
+/* FUSE ISLE と同じ地図（左上の小さな地図・M の島ぜんぶの地図）と降下の文字 */
+#map{position:absolute;left:18px;top:calc(44px + env(safe-area-inset-top));box-shadow:0 1px 6px rgba(0,0,0,.45);opacity:.94}
+@media (max-height:600px){#map{left:10px;top:34px}}
+#bmap{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;display:none;box-shadow:0 4px 28px rgba(0,0,0,.6);pointer-events:none}
+#bmap.on{display:block}
+#dropx{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);font-weight:700;font-size:16px;opacity:0;transition:opacity .15s;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.7);text-align:center}
+#dropx.on{opacity:1}
+#dropx kbd{font-family:"Barlow Condensed",sans-serif;border:1px solid rgba(244,239,230,.5);padding:0 6px;margin-right:6px;border-radius:3px}
+#dropx i{display:block;font-style:normal;font-weight:500;font-size:12px;color:var(--dim);margin-top:4px}
+#mapb{position:absolute;right:14px;top:calc(118px + env(safe-area-inset-top));width:44px;height:44px;border-radius:12px;border:2px solid rgba(244,239,230,.3);background:rgba(16,18,18,.42);pointer-events:auto;display:grid;place-items:center;touch-action:none}
+#mapb svg{width:28px;height:28px}
+#mapb kbd{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-size:12px;color:var(--dim)}
+#feed{top:calc(178px + env(safe-area-inset-top))}
+#hud.air #use,#hud.air .pad,#hud.air #gear{display:none}
+#hud.air #dmg,#hud.air #fuel{opacity:.25}
+@media (pointer:coarse){
+  #mapb kbd,#dropx kbd{display:none}
+  #hud.air #foot{display:block;position:absolute;left:0;bottom:0;width:62%;height:55%;pointer-events:auto;touch-action:none}
+  #dropx{bottom:250px}
+}
+
+#raidtint{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:0;background:radial-gradient(ellipse at 50% 20%,rgba(255,40,20,.55),rgba(120,10,0,.35) 70%);mix-blend-mode:multiply}
+
+#jumpb{position:absolute;right:120px;bottom:calc(150px + env(safe-area-inset-bottom));width:66px;height:66px;border-radius:16px;border:2px solid rgba(244,239,230,.35);background:rgba(16,18,18,.45);pointer-events:auto;display:grid;place-items:center;touch-action:none}
+#jumpb svg{width:38px;height:38px}
+#jumpb kbd{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-size:13px;color:var(--dim)}
+#hud.air #jumpb{display:none}
+@media (pointer:coarse){#jumpb kbd{display:none}#jumpb{right:112px;bottom:calc(130px + env(safe-area-inset-bottom))}}
+@media (pointer:fine){#jumpb{display:none}}
+
+/* 速さ（BREAK THE ROUTE のように大きな数字）と乗っている車の種類 */
+#spd{position:absolute;right:120px;bottom:calc(26px + env(safe-area-inset-bottom));text-align:right;line-height:1;opacity:0;transition:opacity .2s}
+#spd.on{opacity:1}
+#spd b{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:54px;letter-spacing:.01em}
+#spd span{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;color:var(--dim);margin-left:4px}
+#spd i{display:block;font-style:normal;font-size:12px;font-weight:700;color:var(--hz);margin-top:4px}
+@media (pointer:coarse){#spd{right:16px;bottom:auto;top:calc(176px + env(safe-area-inset-top))}#spd b{font-size:34px}#feed{top:calc(240px + env(safe-area-inset-top))}}
+#title .cred{margin-top:12px;font-size:10px;color:var(--dim)}
