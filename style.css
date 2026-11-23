@@ -158,3 +158,4 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 #spd i{display:block;font-style:normal;font-size:12px;font-weight:700;color:var(--hz);margin-top:4px}
 @media (pointer:coarse){#spd{right:16px;bottom:auto;top:calc(176px + env(safe-area-inset-top))}#spd b{font-size:34px}#feed{top:calc(240px + env(safe-area-inset-top))}}
 #title .cred{margin-top:12px;font-size:10px;color:var(--dim)}
+.tape b{font-weight:900;white-space:nowrap}
