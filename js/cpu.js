@@ -133,7 +133,7 @@ export class Driver {
       this.think = 0.5
       let best = null, bs = 1e9
       for (const c of g.cars) {
-        if (!c.alive || c.driver || c.stage >= 3 || c === this.avoidCar || (this.skip && this.skip.has(c)) || g.inRaid(c.x, c.z, 3)) continue
+        if (!c.alive || c.driver || c.stage >= 3 || c === this.avoidCar || (this.skip && this.skip.has(c)) || g.inRaid(c.x, c.z, 3) || c.groundAt(c.x, c.z) < -0.3) continue // 水に浸かった車は取りに行かない
         const d = Math.hypot(c.x - B.x, c.z - B.z), s = d - c.hp * 0.15 - c.fuelK * 8 - (this.likes[c.type] || 0) + (Math.hypot(c.x - z.x, c.z - z.z) > z.r ? 60 : 0) + (c.fuel <= 0 ? 80 : 0)
         if (s < bs) { bs = s; best = c }
       }

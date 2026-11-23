@@ -601,7 +601,8 @@ class Game {
     } else { this.camMode = 'foot'; this.followYaw = null }
     // FUSE ISLE の updateCamera と同じ距離・高さ・注視点: 車 dist 5.0・side 0・頭 2.0、歩き dist 1.7・side 0.52・頭 1.6、落下 4.6・傘 5.8
     const am = P.air && P.air.mode
-    const dist = t ? 5.0 : am === 'chute' ? 5.8 : am === 'fall' ? 4.6 : 1.7, side = t ? 0 : am ? 0.2 : 0.52, up = t ? 2.0 : am === 'chute' ? 2.3 : am === 'fall' ? 1.0 : 1.6
+    // 大きい車（ダンプ・バス）は車の後ろの端より外にカメラを置く（中に入って画面が暗くなった）
+    const dist = t ? Math.max(5.0, t.T.half[0] + 3.2) : am === 'chute' ? 5.8 : am === 'fall' ? 4.6 : 1.7, side = t ? 0 : am ? 0.2 : 0.52, up = t ? Math.max(2.0, t.T.h + 0.5) : am === 'chute' ? 2.3 : am === 'fall' ? 1.0 : 1.6
     const pitch = -0.12 - this.camPitch, cpch = Math.cos(pitch) // FUSE の初めの見下ろし -0.12 に、マウスの上下を足す
     const fwd = new THREE.Vector3(Math.sin(this.camYaw) * cpch, Math.sin(pitch), Math.cos(this.camYaw) * cpch)
     const right = new THREE.Vector3(-Math.cos(this.camYaw), 0, Math.sin(this.camYaw)) // 画面の右
@@ -609,6 +610,13 @@ class Game {
     const wantP = head.clone().addScaledVector(fwd, -dist).addScaledVector(right, side).add(new THREE.Vector3(0, 0.25, 0))
     const h = raycast(this.world, [head.x, head.y, head.z], [wantP.x, wantP.y, wantP.z])
     if (h) { const len = head.distanceTo(wantP) || 1; wantP.lerpVectors(head, wantP, Math.max(0.1, h.t - 0.3 / len)) } // 壁の手前 30cm まで寄せる
+    // ほかの車の中にカメラが入らないように（歩いている時にバスやダンプのそばで画面が真っ暗になった）
+    for (const c of this.cars) {
+      if (c === t || Math.abs(c.x - wantP.x) > 8 || Math.abs(c.z - wantP.z) > 8) continue
+      const inside = q => { const [a, b] = c.local(q.x, q.z); return Math.abs(a) < c.T.half[0] + 0.35 && Math.abs(b) < c.T.half[1] + 0.35 && q.y < c.y + c.T.h + 0.3 && q.y > c.y - 0.3 }
+      if (!inside(wantP)) continue
+      for (let k = 0.9; k > 0.05; k -= 0.1) { const q = head.clone().lerp(wantP, k); if (!inside(q)) { wantP.copy(q); break } if (k < 0.15) wantP.y = c.y + c.T.h + 0.6 }
+    }
     if (!this.camReady) { this.camPos = wantP.clone(); this.camReady = true }
     this.camPos.lerp(wantP, 1 - Math.exp(-dt * 18))
     this.camera.position.copy(this.camPos)
@@ -772,6 +780,8 @@ window.FI = game
 game.init().catch(e => { console.error(e); const el = document.getElementById('err'); if (el) { el.textContent = '読み込みに失敗しました: ' + e.message; el.style.display = 'block' } })
 // 検証用
 game.dbg = {
+  // 検証用: あなたも CPU と同じ運転にする（人として最後まで通す検査で、指はボタンだけ押す）
+  autoMe() { if (!game.me.ai) { game.me.ai = new Driver(game.me, game, game.rng); if (game.me.air && game.me.air.mode === 'plane') game.planDrops() } },
   // 組み立て用: 升目を書き出す（tools/build-pub.mjs）
   bakeOut() { const n = game.nav.ok, g = game.grid; const nb = new Uint8Array(Math.ceil(n.length / 8)); for (let i = 0; i < n.length; i++) if (n[i]) nb[i >> 3] |= 1 << (i & 7); const gh = new Int16Array(g.h.length); for (let i = 0; i < gh.length; i++) gh[i] = Math.max(-32000, Math.min(32000, Math.round(g.h[i] * 100))); const head = new Uint8Array(8), dv = new DataView(head.buffer); dv.setUint32(0, n.length, true); dv.setUint16(4, g.nx, true); dv.setUint16(6, g.nz, true); const all = new Uint8Array(8 + nb.length + g.ok.length + gh.byteLength); all.set(head, 0); all.set(nb, 8); all.set(g.ok, 8 + nb.length); all.set(new Uint8Array(gh.buffer), 8 + nb.length + g.ok.length); let s = ''; for (let i = 0; i < all.length; i += 8192) s += String.fromCharCode.apply(null, all.subarray(i, i + 8192)); return btoa(s) },
   cam(px, py, pz, tx, ty, tz) { game.freeCam = px == null ? null : [px, py, pz, tx, ty, tz] },
