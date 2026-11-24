@@ -1,26 +1,26 @@
 // WRECK ISLE: 軽トラでぶつかり合って壊し合う。爆発したら負け、最後の1台が勝ち（FUSE ISLE の島と爆発を流用）
 import * as THREE from 'three'
-import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwuqry6n'
-import { World, raycast, roofAt } from './collide.js?v=mwuqry6n'
-import { Level } from './level.js?v=mwuqry6n'
-import { buildProps } from './props.js?v=mwuqry6n'
-import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwuqry6n'
-import { FX } from './fx.js?v=mwuqry6n'
-import { buildRails } from './rails.js?v=mwuqry6n'
-import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwuqry6n'
-import { preloadVehicles, VT } from './vehicles.js?v=mwuqry6n'
-import { Person, peopleMethods, FOOT } from './people.js?v=mwuqry6n'
-import { loadChars, setCharView } from './chars.js?v=mwuqry6n'
-import { dropMethods } from './wdrop.js?v=mwuqry6n'
-import { raidMethods } from './raid.js?v=mwuqry6n'
-import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwuqry6n'
-import { bombMesh } from './bombs.js?v=mwuqry6n'
-import { Minimap } from './minimap.js?v=mwuqry6n'
+import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwur1e4h'
+import { World, raycast, roofAt } from './collide.js?v=mwur1e4h'
+import { Level } from './level.js?v=mwur1e4h'
+import { buildProps } from './props.js?v=mwur1e4h'
+import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwur1e4h'
+import { FX } from './fx.js?v=mwur1e4h'
+import { buildRails } from './rails.js?v=mwur1e4h'
+import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwur1e4h'
+import { preloadVehicles, VT } from './vehicles.js?v=mwur1e4h'
+import { Person, peopleMethods, FOOT } from './people.js?v=mwur1e4h'
+import { loadChars, setCharView } from './chars.js?v=mwur1e4h'
+import { dropMethods } from './wdrop.js?v=mwur1e4h'
+import { raidMethods } from './raid.js?v=mwur1e4h'
+import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwur1e4h'
+import { bombMesh } from './bombs.js?v=mwur1e4h'
+import { Minimap } from './minimap.js?v=mwur1e4h'
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js'
-import { DriveGrid } from './drive.js?v=mwuqry6n'
-import { Driver } from './cpu.js?v=mwuqry6n'
-import { Nav } from './bots.js?v=mwuqry6n'
-import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwuqry6n'
+import { DriveGrid } from './drive.js?v=mwur1e4h'
+import { Driver } from './cpu.js?v=mwur1e4h'
+import { Nav } from './bots.js?v=mwur1e4h'
+import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwur1e4h'
 
 const Q = Object.fromEntries(new URLSearchParams(location.search))
 const $ = s => document.querySelector(s)
@@ -544,13 +544,21 @@ class Game {
   }
   // 空き車の補給: 乗っていない車が少なければ、円の中に空から1台落とす（歩いている人の逃げ道）
   supplyCars(dt) {
+    // 2026-11-24 本人「車は最後の方足りひんくなる」: 円の中の空き車で数える（外の空き車は数えない）。
+    // 歩いている人の数＋1 台（最低 4 台）まで、円が小さいほど早く落とす。歩いているあなたの近く（25〜60m）を先に選ぶ
     if (this.t < 35) return
-    this.supT = (this.supT ?? 18) - dt; if (this.supT > 0) return
-    this.supT = 20
-    if (this.cars.filter(c => c.alive && !c.driver).length >= 4) return
+    this.supT = (this.supT ?? 12) - dt; if (this.supT > 0) return
     const z = this.zone
+    this.supT = z.r < 90 ? 6 : z.r < 180 ? 9 : 14
+    const inZ = c => Math.hypot(c.x - z.x, c.z - z.z) < z.r * 0.92
+    const empty = this.cars.filter(c => c.alive && !c.driver && !c.T.bike && inZ(c)).length
+    const walkers = this.ps.filter(p => p.alive && !p.car && !p.air).length
+    if (empty >= Math.max(4, walkers + 1)) return
+    const me = this.me, nearMe = me.alive && !me.car && !me.air && inZ(me) && !this.cars.some(c => c.alive && !c.driver && Math.hypot(c.x - me.x, c.z - me.z) < 60)
     for (let k = 0; k < 200; k++) {
-      const a = this.rng() * 6.283, r = Math.sqrt(this.rng()) * z.r * 0.7, x = z.x + Math.cos(a) * r, zz = z.z + Math.sin(a) * r
+      let x, zz
+      if (nearMe && k < 120) { const a = this.rng() * 6.283, r = 25 + this.rng() * 35; x = me.x + Math.cos(a) * r; zz = me.z + Math.sin(a) * r; if (Math.hypot(x - z.x, zz - z.z) > z.r * 0.85) continue }
+      else { const a = this.rng() * 6.283, r = Math.sqrt(this.rng()) * z.r * 0.7; x = z.x + Math.cos(a) * r; zz = z.z + Math.sin(a) * r }
       if (!this.grid.free(x, zz) || [[3, 0], [-3, 0], [0, 3], [0, -3]].some(([dx, dz]) => !this.grid.free(x + dx, zz + dz))) continue
       if (this.cars.some(c => Math.hypot(c.x - x, c.z - zz) < 8)) continue
       const c = new Car(this, 200 + this.cars.length, x, zz, this.rng() * 6.28, SPARE[this.cars.length % SPARE.length], TYPE_MIX[Math.floor(this.rng() * TYPE_MIX.length)])

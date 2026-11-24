@@ -1,8 +1,8 @@
 // WRECK ISLE の車（軽トラ）。動き・壁と車どうしの当たり・壊れ方（へこみ・部品が飛ぶ・煙→黒煙→火→爆発）
 import * as THREE from 'three'
-import { pushOut, roofAt, roofPush } from './collide.js?v=mwuqry6n'
-import { mat } from './level.js?v=mwuqry6n'
-import { VT, buildVehicle, makeAccessories } from './vehicles.js?v=mwuqry6n'
+import { pushOut, roofAt, roofPush } from './collide.js?v=mwur1e4h'
+import { mat } from './level.js?v=mwur1e4h'
+import { VT, buildVehicle, makeAccessories, CAR_K } from './vehicles.js?v=mwur1e4h'
 
 export const CAR = { half: [1.75, 0.72], top: 1.9, accel: 11, brake: 24, maxF: 19, maxR: 7, wheelbase: 2.2, steer: 0.62, grip: 7 }
 // 壊れの段階: 0 きれい / 1 煙 / 2 黒煙 / 3 火 / 爆発
@@ -159,6 +159,7 @@ export class Car {
     this.v3 = buildVehicle(type, color)
     this.pivot = new THREE.Group(); game.scene.add(this.pivot); { const pv = this.pivot, up = THREE.Object3D.prototype.updateMatrixWorld; pv.updateMatrixWorld = function (f) { if (this.matrixWorldAutoUpdate === false && !f) return; up.call(this, f) } } // 眠っている車は中の部品ごと形の計算を飛ばす
     this.pivot.add(this.v3.g); this.v3.g.position.set(this.v3.offsetX, 0, 0)
+    if (!this.T.bike) this.pivot.scale.setScalar(CAR_K)
     Object.assign(this.v3, makeAccessories(this.T, this.pivot))
     this.x = x; this.z = z; this.yaw = yaw; this.y = surfaceAt(game.world, x, z)
     this.vx = 0; this.vz = 0; this.vy = 0; this.w = 0; this.steer = 0; this.wheelRot = 0

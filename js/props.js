@@ -1,10 +1,10 @@
 // 小物: Poly Haven の模型（CC0）と、日本の漁港らしい物を手で組んだ物
 import * as THREE from 'three'
-import { L as tr } from './i18n.js?v=mwuqry6n'
+import { L as tr } from './i18n.js?v=mwur1e4h'
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from '../vendor/jsm/libs/meshopt_decoder.module.js'
-import { mat } from './level.js?v=mwuqry6n'
-import { buildPoles } from './poles.js?v=mwuqry6n'
+import { mat } from './level.js?v=mwur1e4h'
+import { buildPoles } from './poles.js?v=mwur1e4h'
 
 const gl = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
 const cache = new Map()

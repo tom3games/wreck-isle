@@ -1,7 +1,7 @@
 // 車の種類（2026-11-23 本人「車の種類と特徴増やして」）。見た目は BREAK THE ROUTE の作り方（断面をつないだ曲面の車体・クリア塗装・実車モデル）を流用
 // 速さ・重さ・硬さ・ガソリンの数字に加えて、形と大きさとエンジン音（同じ録音の高さを変える）で違いが分かるようにする
 import * as THREE from 'three'
-import { ProcCar, RealCar, loadCarModel, carModelReady, sharedMats, wheelGeometries } from './btrcar.js?v=mwuqry6n'
+import { ProcCar, RealCar, loadCarModel, carModelReady, sharedMats, wheelGeometries } from './btrcar.js?v=mwur1e4h'
 
 // half: 前後と左右の半分の長さ（m）。circles: 当たりの円の前後の位置。r: 円の半径
 // mass: 重さ（ぶつかった時の押し合い）。armor: 硬さ（受ける壊れを割る）。ram: 体当たりの強さ
@@ -16,6 +16,10 @@ export const VT = {
 }
 // 自転車（2026-11-24 本人「自転車も所々追加して」）: 徒歩より速く車より遅い・ガソリン不要・とてももろい・乗る人がむき出し・ジャンプ低め
 VT.bike = { name: '自転車', note: 'ガソリン不要・とてももろい', en: 'Bike', noteEn: 'No fuel · very fragile', half: [0.9, 0.32], circles: [0.45, -0.45], r: 0.38, h: 1.7, mass: 0.25, armor: 0.3, ram: 0.15, maxF: 9.5, accel: 6, steer: 0.95, grip: 9, tank: Infinity, burn: 0, jump: 6, rate: 0, bike: true }
+// 2026-11-24 本人「車のサイズ全体的にもうちょっと小さく・最高スピード落としていい」: 車（自転車以外）を 0.85 倍の大きさ・最高速度 0.85 倍。
+// 当たり（half・circles・r・h）と見た目（car.js で pivot を同じ倍率に）をそろえる
+export const CAR_K = 0.85, SPEED_K = 0.85
+for (const k in VT) { const T = VT[k]; if (T.bike) continue; T.half = T.half.map(v => +(v * CAR_K).toFixed(3)); T.circles = T.circles.map(v => +(v * CAR_K).toFixed(3)); T.r = +(T.r * CAR_K).toFixed(3); T.h = +(T.h * CAR_K).toFixed(3); T.maxF = +(T.maxF * SPEED_K).toFixed(2) }
 export const VT_KEYS = Object.keys(VT)
 
 // BREAK THE ROUTE の手続きの車の形（W 半幅・L 半長・H 屋根・hood ボンネット・cabF/cabR 窓の前後・track 車輪の幅・wz 車軸・wr 車輪の半径）
