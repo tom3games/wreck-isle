@@ -53,3 +53,4 @@
 - sky/sky_*.webp: Poly Haven の HDRI をトーンマップした画像（CC0。BREAK THE ROUTE と同じ）
 - 車の形（js/btrcar.js）: BREAK THE ROUTE の手続きの車の作り方を流用
 - snd/siren.mp3: Singapore Public Warning System siren / Seloloving / CC0（Wikimedia Commons）
+- snd/bell.mp3: File:156064 marcolo91 bicycle-bell.wav / marcolo91 / CC0

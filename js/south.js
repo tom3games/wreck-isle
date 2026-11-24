@@ -379,6 +379,7 @@ export function house2(level, x, z, w, d, wallMat, roof, rh, o) {
   B(x + 0.1, top - 0.06, z + 0.1, x + w - 0.1, top, z + d - 0.1, 'cedar', { nocol: true }) // 見える天井板
   // 瓦屋根（切妻）
   const along = o.ridge, half = (along === 'x' ? d : w) / 2 + 0.7, ang = Math.atan2(rh, half), len = Math.hypot(rh, half), cy = top + rh / 2 + 0.05
+  ;(level.world.roofs || (level.world.roofs = [])).push({ x0: x - 0.7, x1: x + w + 0.7, z0: z - 0.7, z1: z + d + 0.7, base: top, rh, ridge: along, c: along === 'x' ? z + d / 2 : x + w / 2, half }) // 屋根の当たり（WRECK ISLE）
   if (along === 'x') {
     level.slab(x + w / 2, cy, z + d / 2 - half / 2, w + 1.4, 0.12, len, -ang, 0, roof); level.slab(x + w / 2, cy, z + d / 2 + half / 2, w + 1.4, 0.12, len, ang, 0, roof)
     B(x - 0.7, top + rh - 0.02, z + d / 2 - 0.16, x + w + 0.7, top + rh + 0.18, z + d / 2 + 0.16, roof, { nocol: true })

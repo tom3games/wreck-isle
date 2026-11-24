@@ -1,6 +1,6 @@
 // WRECK ISLE: 軽トラでぶつかり合って壊し合う。爆発したら負け、最後の1台が勝ち（FUSE ISLE の島と爆発を流用）
 import * as THREE from 'three'
-import { World, raycast } from './collide.js'
+import { World, raycast, roofAt } from './collide.js'
 import { Level } from './level.js'
 import { buildProps } from './props.js'
 import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js'
@@ -147,7 +147,7 @@ class Game {
   setLoad(k) { const b = $('#loadbar'); if (b) b.style.transform = `scaleX(${k})`; if (k >= 1) $('#loading')?.classList.add('done') }
   defSounds() {
     if (!Snd) return
-    Snd.def({ boom: ['snd/boom1.mp3', 'snd/boom2.mp3', 'snd/boom3.mp3', 'snd/boom4.mp3'], crash: ['snd/crash1.mp3', 'snd/crash2.mp3', 'snd/crash3.mp3', 'snd/crash4.mp3'], debris: ['snd/debris1.mp3', 'snd/debris2.mp3'], hitl: ['snd/hitl1.mp3', 'snd/hitl2.mp3', 'snd/hitl3.mp3'], thud: 'snd/thud.mp3', glass: ['snd/glass1.mp3', 'snd/glass2.mp3'], boxbreak: 'snd/boxbreak.mp3', roll: ['snd/roll1.mp3', 'snd/roll2.mp3'], spear: 'snd/spear.mp3', latch: 'snd/latch.mp3', repair: ['snd/repair1.mp3', 'snd/repair2.mp3'], tick: 'snd/tick.mp3', jet: 'snd/jet.mp3', magnet: 'snd/magnet.mp3', horn: 'snd/horn.mp3', pin: 'snd/pin.mp3', gull: ['snd/gull1.mp3', 'snd/gull2.mp3'], win: 'snd/win.mp3', lose: 'snd/lose.mp3', siren: 'snd/siren.mp3' })
+    Snd.def({ boom: ['snd/boom1.mp3', 'snd/boom2.mp3', 'snd/boom3.mp3', 'snd/boom4.mp3'], crash: ['snd/crash1.mp3', 'snd/crash2.mp3', 'snd/crash3.mp3', 'snd/crash4.mp3'], debris: ['snd/debris1.mp3', 'snd/debris2.mp3'], hitl: ['snd/hitl1.mp3', 'snd/hitl2.mp3', 'snd/hitl3.mp3'], thud: 'snd/thud.mp3', glass: ['snd/glass1.mp3', 'snd/glass2.mp3'], boxbreak: 'snd/boxbreak.mp3', roll: ['snd/roll1.mp3', 'snd/roll2.mp3'], spear: 'snd/spear.mp3', latch: 'snd/latch.mp3', repair: ['snd/repair1.mp3', 'snd/repair2.mp3'], tick: 'snd/tick.mp3', jet: 'snd/jet.mp3', magnet: 'snd/magnet.mp3', horn: 'snd/horn.mp3', pin: 'snd/pin.mp3', gull: ['snd/gull1.mp3', 'snd/gull2.mp3'], win: 'snd/win.mp3', lose: 'snd/lose.mp3', siren: 'snd/siren.mp3', bell: 'snd/bell.mp3' })
   }
   startAudio() {
     if (!Snd || this.audioOn) return
@@ -213,6 +213,8 @@ class Game {
       if (i === 0) c.paintName = '白'
       c.hp = 60 + Math.round(this.rng() * 40); c.fuel = c.T.tank * (0.35 + this.rng() * 0.55); c.wear(); this.cars.push(c)
     }
+    // 自転車をところどころに（2026-11-24 本人）
+    for (let i = 0; i < (Q.bikes != null ? +Q.bikes : 12); i++) { const [x, z] = spot(0, R0 * 0.82, 26, false), c = new Car(this, 300 + i, x, z, this.rng() * 6.28, [['自転車', [0x2b5d8a, 0xb23a2e, 0x2f6b3c, 0xd9a92b, 0x1f1f22][i % 5]][0], [0x2b5d8a, 0xb23a2e, 0x2f6b3c, 0xd9a92b, 0x1f1f22][i % 5]], 'bike'); this.cars.push(c) }
     const NAMES = PAINT.map(p => p[0])
     for (let i = 0; i < N_CARS; i++) {
       const p = new Person(this, i, NAMES[i], i === 0); p.nid = i
@@ -288,6 +290,8 @@ class Game {
         C.w += -tq * k * 0.16; C.slideT = Math.max(C.slideT, close > 6 ? 0.7 : 0.25)
       }
       if (close < 3.5) { if (close > 1.5) this.scrape(best, A, B); continue }
+      // 自転車は乗る人がむき出し: 車に当てられると人が吹っ飛ぶ
+      for (const [K, O] of [[A, B], [B, A]]) if (K.T.bike && !O.T.bike && K.driver && close > 4) { const p = K.driver, by = O.driver && O.driver !== p ? O.driver : null; this.exitCar(p); const Bd = p.body; Bd.vx = O.vx * 0.9 + nx * (K === A ? -4 : 4); Bd.vz = O.vz * 0.9 + nz * (K === A ? -4 : 4); Bd.vy = 4 + close * 0.3; Bd.onGround = false; p.stun = 1.2; p.char.knock(); this.sound('thud', Bd, 1); this.hurtPerson(p, (close - 3) * 5, by, 'ram') }
       const key = i * 64 + j, last = this.pairT.get(key) ?? -9
       if (this.t - last < 0.3) continue
       this.pairT.set(key, this.t)
@@ -366,6 +370,13 @@ class Game {
     if (c.stage > st0 && c === this.player) this.toast(['', '煙が出た', '黒い煙', '火が出た'][c.stage])
   }
   explodeCar(c, by, how) {
+    if (c.T.bike) { // 自転車は燃えずにばらばらに（乗る人は放り出される）
+      c.alive = false; c.hp = 0; const rider = c.driver
+      for (const z of ['F', 'B', 'L', 'R', 'bed']) c.breakParts(z, 3, new THREE.Vector3(0, 4, 0))
+      c.v3.g.rotation.x = 1.4; this.sound('hitl', c, 0.8); this.debris.chip(new THREE.Vector3(c.x, c.y + 0.5, c.z), new THREE.Vector3(0, 3, 0), c.color, 10)
+      if (rider) { this.exitCar(rider); rider.body.vy = 4; rider.body.onGround = false; rider.stun = 1; rider.char.knock(); this.hurtPerson(rider, 12, by && by.driver ? by.driver : null, 'ram') }
+      return
+    }
     c.alive = false; c.hp = 0; this.ev.booms++
     const killer = (by && by.driver) || (c.lastHitBy && this.t - c.lastHitT < 8 ? c.lastHitBy : null)
     if (how === 'zone') this.ev.outKills++
@@ -397,8 +408,10 @@ class Game {
       if (p.car || p.air || !p.alive) continue
       const B = p.body, d = Math.hypot(B.x - x, B.z - z); if (d > R) continue
       const k = 1 - d / R, nx = (B.x - x) / (d || 1), nz = (B.z - z) / (d || 1)
-      B.vx += nx * 10 * k; B.vz += nz * 10 * k; B.vy = Math.max(B.vy, 3 + 4 * k); B.onGround = false; p.stun = Math.max(p.stun, 0.8); if (k > 0.3 && !p.char.dead) p.char.knock()
-      this.hurtPerson(p, dmg * k, by && by !== p ? by : null, 'boom')
+      const low = !!p.dive && p.dive.t < 0.75 // 飛んで伏せている間は体が低い（FUSE ISLE と同じく半分）
+      B.vx += nx * 10 * k * (low ? 0.6 : 1); B.vz += nz * 10 * k * (low ? 0.6 : 1); B.vy = Math.max(B.vy, 3 + 4 * k); B.onGround = false; p.stun = Math.max(p.stun, 0.8); if (k > 0.3 && !p.char.dead && !low) p.char.knock()
+      const hurt = dmg * k * (low ? 0.5 : 1); if (p.hp > hurt && k > 0.1 && hurt < 25) this.nearMiss(p)
+      this.hurtPerson(p, hurt, by && by !== p ? by : null, 'boom')
     }
   }
   skidMarks() {
@@ -550,10 +563,11 @@ class Game {
   footInput() {
     const k = this.keys, T = this.touch
     let f = (k.KeyW || k.ArrowUp ? 1 : 0) - (k.KeyS || k.ArrowDown ? 1 : 0), r = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0)
-    if (T.mx || T.mz) { f = T.mz; r = T.mx }
+    let run = !!(k.ShiftLeft || k.ShiftRight)
+    if (T.mx || T.mz) { f = T.mz; r = T.mx; run = Math.hypot(T.mx, T.mz) > 0.92 } // スマホはスティックを端まで倒すと走る
     const l = Math.hypot(f, r); if (l > 1) { f /= l; r /= l }
     const fx = Math.sin(this.camYaw), fz = Math.cos(this.camYaw)
-    return { mx: fx * f - fz * r, mz: fz * f + fx * r }
+    return { mx: fx * f - fz * r, mz: fz * f + fx * r, run }
   }
   toggleCar() {
     const p = this.me; if (!p.alive || this.mode !== 'play' || this.countT > 0) return
@@ -671,10 +685,12 @@ class Game {
     addEventListener('keydown', e => {
       this.keys[e.code] = true
       if (this.mode === 'title' && (e.code === 'Enter' || e.code === 'Space')) { this.begin(); return }
-      if (e.code === 'Space' && this.mode === 'play' && this.player && this.countT <= 0) { this.useItem(this.player); e.preventDefault() }
-      if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat && this.mode === 'play' && this.me.car) this.me.car.jump()
-      if (e.code === 'Space' && !e.repeat && this.mode === 'play' && this.me.alive && !this.me.car && !this.me.air) { this.me.wantJump = true; e.preventDefault() }
-      if ((e.code === 'KeyF' || e.code === 'KeyE') && !e.repeat) { if (this.me.air) this.airAct(this.me); else this.toggleCar() }
+      // キー（2026-11-24 本人「Shift でジャンプはおかしい」）: 車でもアクションゲームの定番どおり Space がジャンプ・E がアイテム（左クリックでも）・F で乗り降り（FUSE ISLE と同じ）
+      // 歩き: Space で跳ぶ・Shift を押している間だけ走る・C（か Ctrl）で飛び込み（FUSE ISLE の「走りながらしゃがむ」と同じ動き）
+      if (e.code === 'Space' && !e.repeat && this.mode === 'play' && this.me.alive && !this.me.air) { if (this.me.car) this.me.car.jump(); else this.me.wantJump = true; e.preventDefault() }
+      if (e.code === 'KeyE' && !e.repeat && this.mode === 'play' && this.player && this.countT <= 0) this.useItem(this.player)
+      if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat && this.mode === 'play' && this.me.alive && !this.me.car && !this.me.air) this.me.wantDive = true
+      if (e.code === 'KeyF' && !e.repeat) { if (this.me.air) this.airAct(this.me); else this.toggleCar() }
       if (e.code === 'KeyM' && !e.repeat && this.mode === 'play') this.bigMap = !this.bigMap
       if (e.code === 'KeyR' && this.resultShown) this.again()
     })
@@ -683,7 +699,11 @@ class Game {
     // 視点: PC は画面クリックでマウスを固定して回す（Esc で解除）。感度は FUSE ISLE と同じ 0.0022
     const cv = this.renderer.domElement; this.camPitch = 0
     const look = (dx, dy, s) => { const dyaw = -dx * s; if (this.me && this.me.car && this.camMode === 'car') this.lookOff = Math.max(-Math.PI, Math.min(Math.PI, (this.lookOff || 0) + dyaw)); else this.camYaw += dyaw; this.camPitch = Math.max(-0.85, Math.min(1.03, this.camPitch + dy * s)); this.lookT = performance.now() }
-    cv.addEventListener('mousedown', e => { if (this.mode === 'play' && document.pointerLockElement !== cv && !matchMedia('(pointer: coarse)').matches) { try { const r = cv.requestPointerLock?.(); if (r && r.catch) r.catch(() => {}) } catch (er) {} } })
+    cv.addEventListener('mousedown', e => {
+      if (this.mode !== 'play' || matchMedia('(pointer: coarse)').matches) return
+      if (document.pointerLockElement !== cv) { try { const r = cv.requestPointerLock?.(); if (r && r.catch) r.catch(() => {}) } catch (er) {} }
+      if (e.button === 0 && this.player && this.countT <= 0) this.useItem(this.player) // 左クリックはアイテム（マウスを固定していなくても）
+    })
     addEventListener('mousemove', e => { if (document.pointerLockElement === cv && this.mode === 'play') look(e.movementX, e.movementY, 0.0022) })
     // スマホ: 画面の空いている所を指でなぞる（ボタン・スティックの上は取り合わない）
     let lid = null, lx = 0, ly = 0
@@ -703,6 +723,7 @@ class Game {
     $('#use').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play' && this.player && this.countT <= 0) this.useItem(this.player) })
     $('#door').addEventListener('pointerdown', e => { e.preventDefault(); if (this.me.air) this.airAct(this.me); else this.toggleCar() })
     $('#jumpb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode !== 'play' || !this.me.alive) return; if (this.me.car) this.me.car.jump(); else if (!this.me.air) this.me.wantJump = true })
+    $('#diveb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play' && this.me.alive && !this.me.car && !this.me.air) this.me.wantDive = true })
     $('#mapb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play') this.bigMap = !this.bigMap })
     // 歩きの時だけ: 左手のスティック（触った所に出る）
     const st = $('#stick'), knob = st.querySelector('i'); let sid = null, sx = 0, sy = 0
@@ -724,7 +745,7 @@ class Game {
   again() { this.newMatch(); this.touch.rev = false; $('#gear').classList.remove('on'); this.begin() }
 
   // ---------- 画面 ----------
-  toast(text) { const t = $('#toast'); if (!t) return; t.textContent = text; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 900) }
+  toast(text, cls) { const t = $('#toast'); if (!t) return; t.textContent = text; t.classList.toggle('avoid', cls === 'avoid'); t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); clearTimeout(this._tt); this._tt = setTimeout(() => t.classList.remove('show'), 900) }
   set(id, key, val, fn) { if (this.hudCache[key] === val) return; this.hudCache[key] = val; fn($(id), val) }
   hud() {
     if (this.mode !== 'play') return
@@ -738,6 +759,7 @@ class Game {
     if (this.dropHud) this.dropHud()
     const foot = P.alive && !p && !P.air
     this.set('#hud', 'foot', foot ? 1 : 0, (el, v) => el.classList.toggle('foot', !!v))
+    this.set('#hud', 'bike', p && p.T.bike ? 1 : 0, (el, v) => el.classList.toggle('bike', !!v))
     // 自分の車の壊れ具合（上から見た小さな絵の色）とガソリンの計器
     this.set('#dmg', 'st', p ? p.stage : 4, (el, v) => { el.dataset.st = v })
     const fu = p ? Math.round(p.fuelK * 100) : -1
@@ -805,7 +827,7 @@ game.dbg = {
     const pick = () => {
       for (let k = 0; k < 20000; k++) {
         const x = -320 + rnd() * 640, z = -80 + rnd() * 670
-        if (!G.free(x, z)) continue
+        if (where !== 'roof' && !G.free(x, z)) continue
         const h0 = this.surface(x, z), hs = [[4, 0], [-4, 0], [0, 4], [0, -4]].map(([a, b]) => this.surface(x + a, z + b))
         const near = R => g.world.near(x - R, z - R, x + R, z + R, []).some(b => !b.dead && b.kind === 'solid' && b.max[1] - b.min[1] > 2.2 && b.tag !== 'tree')
         const road = g.world.near(x - 0.1, z - 0.1, x + 0.1, z + 0.1, []).some(b => b.mat === 'road' && x > b.min[0] && x < b.max[0] && z > b.min[2] && z < b.max[2])
@@ -813,6 +835,7 @@ game.dbg = {
           : where === 'slope' ? hs.some(h => Math.abs(h - h0) > 0.7) && hs.every(h => h > -0.3)
           : where === 'road' ? road
           : where === 'house' ? near(5)
+          : where === 'roof' ? g.world.near(x - 0.1, z - 0.1, x + 0.1, z + 0.1, []).some(b => !b.dead && b.kind === 'solid' && b.max[1] > 3 && b.max[1] < 14 && x > b.min[0] + 1 && x < b.max[0] - 1 && z > b.min[2] + 1 && z < b.max[2] - 1)
           : where === 'water' ? [[7, 0], [-7, 0], [0, 7], [0, -7]].some(([a, b]) => g.world.H(x + a, z + b) < -0.6 && this.surface(x + a, z + b) < -0.5) : false
         if (ok) return [x, z]
       }
@@ -831,6 +854,9 @@ game.dbg = {
       else if (kind === 'jump') { const me = g.me; T.driver = me; me.car = T; me.alive = true; me.ai = { update() { if (me.car) me.car.input = { throttle: 1, steer: 0 } } }; this.put(T, x, z, yaw, sp); T.jumpT = -9; T.jump()
         // 半分は前に別の車を置いて、上に落ちる（踏みつけ）
         if (i % 2 === 0) { const O = g.cars.find(c => c !== T); O.alive = true; O.hp = 1e6; O.pivot.visible = true; this.put(O, x + Math.sin(yaw) * sp * 0.8, z + Math.cos(yaw) * sp * 0.8, yaw + 1.57, 0) } }
+      else if (kind === 'roof') { // 屋根の上へ落とす・屋根から飛び出す
+        let top = 0; for (const b of g.world.near(x - 0.1, z - 0.1, x + 0.1, z + 0.1, [])) if (!b.dead && b.kind === 'solid' && x > b.min[0] && x < b.max[0] && z > b.min[2] && z < b.max[2] && b.max[1] > top && b.max[1] < 14) top = b.max[1]
+        T.x = x; T.z = z; T.yaw = yaw; T.y = top + 5 + rnd() * 4; T.vx = Math.sin(yaw) * sp * 0.6; T.vz = Math.cos(yaw) * sp * 0.6; T.vy = 0; T.air = true; T.w = 0 }
       else if (kind === 'drop') { this.put(T, x, z, yaw, 0); T.y += 14; T.vy = -2; T.air = true }
       else if (kind === 'boom') { this.put(T, x, z, yaw, sp * 0.3); T.vx += Math.sin(yaw) * 12; T.vz += Math.cos(yaw) * 12; T.vy = 3 + rnd() * 6; T.air = true; T.fwX = (rnd() - 0.5) * 6; T.fwZ = (rnd() - 0.5) * 6; T.w = (rnd() - 0.5) * 5 }
       if (kind !== 'mine' && kind !== 'jump') T.input = { throttle: 0, steer: 0 }
@@ -843,9 +869,11 @@ game.dbg = {
         if (landT != null && k - landT > 120) break
       }
       // めり込み: 車の底が地形より 0.25m 以上下・または平たい箱（道・床・岸壁）の中に入ったまま
-      const H = g.world.H(T.x, T.z), inBox = g.world.near(T.x - 0.1, T.z - 0.1, T.x + 0.1, T.z + 0.1, []).find(b => !b.dead && b.kind === 'solid' && T.x > b.min[0] && T.x < b.max[0] && T.z > b.min[2] && T.z < b.max[2] && b.max[1] - b.min[1] <= 4 && b.min[1] < T.y + 0.2 && b.max[1] > T.y + 0.4) // 車の底（0.3m）より上まで入っている
+      const H = g.world.H(T.x, T.z), inBox = g.world.near(T.x - 0.1, T.z - 0.1, T.x + 0.1, T.z + 0.1, []).find(b => !b.dead && b.kind === 'solid' && T.x > b.min[0] && T.x < b.max[0] && T.z > b.min[2] && T.z < b.max[2] && ((b.max[1] - b.min[1] <= 4 && b.min[1] < T.y + 0.2 && b.max[1] > T.y + 0.4) || (b.min[1] < T.y + 0.9 && b.max[1] > T.y + 0.9))) // 車の底より上まで入っている・壁や屋根の中に車体が入っている
       out.n++; if (!launched && kind === 'mine') { out.notLaunched = (out.notLaunched || 0) + 1; (out.nl || (out.nl = [])).push([Math.round(x), Math.round(z), T.alive, g.mines.length, g.mines[0] && g.mines[0].state, +T.y.toFixed(2), +this.surface(x, z).toFixed(2), Math.round(T.x), Math.round(T.z)]) }
-      if ((T.y < H - 0.25 || inBox) && T.alive && !T.air) { out.buried++; out.samples.push([Math.round(x), Math.round(z), '→', Math.round(T.x), Math.round(T.z), +T.y.toFixed(2), +H.toFixed(2), inBox ? inBox.max[1] : null]) }
+      if (kind === 'roof') (out.roofY || (out.roofY = [])).push([Math.round(x), Math.round(z), +T.y.toFixed(1), Math.round(T.x), Math.round(T.z), T.air ? 1 : 0])
+      const rf = roofAt(g.world, T.x, T.z), inRoof = rf > -1e8 && T.y < rf - 0.3 && T.y > rf - 3 // 屋根の板の中に入ったまま
+      if ((T.y < H - 0.25 || inBox || inRoof) && T.alive && !T.air) { out.buried++; out.samples.push([Math.round(x), Math.round(z), '→', Math.round(T.x), Math.round(T.z), +T.y.toFixed(2), +H.toFixed(2), inBox ? inBox.max[1] : null]) }
       out.worst = Math.min(out.worst, +worst.toFixed(2))
     }
     g._quiet = false

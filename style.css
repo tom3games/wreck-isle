@@ -159,3 +159,9 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 @media (pointer:coarse){#spd{right:16px;bottom:auto;top:calc(176px + env(safe-area-inset-top))}#spd b{font-size:34px}#feed{top:calc(240px + env(safe-area-inset-top))}}
 #title .cred{margin-top:12px;font-size:10px;color:var(--dim)}
 .tape b{font-weight:900;white-space:nowrap}
+
+#toast.avoid{color:#a8dcff;font-size:clamp(20px,2.6vw,34px)}
+#diveb{display:none;position:absolute;right:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:92px;height:92px;border-radius:50%;border:2px solid rgba(244,239,230,.35);background:rgba(16,18,18,.45);pointer-events:auto;place-items:center;touch-action:none}
+#diveb svg{width:52px;height:52px}
+@media (pointer:coarse){#hud.foot #diveb{display:grid}#hud.foot #use{display:none}}
+#hud.bike #use .ic{opacity:.4}

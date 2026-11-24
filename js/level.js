@@ -378,6 +378,7 @@ export class Level {
     this.B(x - 0.6, y0 + h, z - 0.6, x + w + 0.6, y0 + h + 0.2, z + d + 0.6, 'darkWood', { vis: false })
     // 瓦屋根（切妻。棟は x 方向）
     const cx = x + w / 2, half = d / 2 + 0.7, ang = Math.atan2(rh, half), len = Math.hypot(rh, half)
+    ;(this.world.roofs || (this.world.roofs = [])).push({ x0: x - 0.7, x1: x + w + 0.7, z0: z - 0.7, z1: z + d + 0.7, base: y0 + h, rh, ridge: 'x', c: z + d / 2, half }) // 屋根の当たり（WRECK ISLE: 車が屋根にめり込まない）
     this.slab(cx, y0 + h + rh / 2 + 0.05, z + d / 2 - half / 2, w + 1.4, 0.12, len, -ang, 0, roof)
     this.slab(cx, y0 + h + rh / 2 + 0.05, z + d / 2 + half / 2, w + 1.4, 0.12, len, ang, 0, roof)
     // 妻の三角（見た目）

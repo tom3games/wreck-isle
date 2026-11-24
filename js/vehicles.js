@@ -12,14 +12,16 @@ export const VT = {
   sports: { name: 'スポーツカー', note: 'いちばん速い・もろい・ガソリンが少ない', half: [2.25, 0.98], circles: [1.35, 0, -1.35], r: 0.95, h: 1.3, mass: 0.9, armor: 0.7, ram: 1, maxF: 29, accel: 19, steer: 0.66, grip: 9, tank: 60, burn: 1.35, jump: 11.2, rate: 1.55 },
   buggy:  { name: 'バギー', note: '高く跳ぶ・軽い', half: [1.6, 0.95], circles: [0.9, 0, -0.9], r: 0.9, h: 1.6, mass: 0.6, armor: 0.65, ram: 0.7, maxF: 22, accel: 16, steer: 0.8, grip: 6, tank: 70, burn: 0.85, jump: 15.5, rate: 1.4 },
   dump:   { name: 'ダンプ', note: '遅い・硬い・体当たりが強い・ガソリンを食う', half: [3.1, 1.25], circles: [2.1, 0.7, -0.7, -2.1], r: 1.2, h: 3.0, mass: 2.6, armor: 2.2, ram: 1.9, maxF: 15, accel: 7, steer: 0.45, grip: 9, tank: 120, burn: 1.8, jump: 8.5, rate: 0.68 },
-  bus:    { name: 'バス', note: 'とても硬い・遅い・的が大きい', half: [5.2, 1.3], circles: [4.2, 2.1, 0, -2.1, -4.2], r: 1.25, h: 3.1, mass: 3.4, armor: 3, ram: 1.6, maxF: 13.5, accel: 5.5, steer: 0.4, grip: 9, tank: 130, burn: 2, jump: 7, rate: 0.58 },
+  bus:    { name: 'バス', note: 'とても硬い・遅い・的が大きい', half: [3.9, 1.18], circles: [2.95, 1.45, 0, -1.45, -2.95], r: 1.15, h: 2.85, mass: 3.4, armor: 3, ram: 1.6, maxF: 13.5, accel: 5.5, steer: 0.4, grip: 9, tank: 130, burn: 2, jump: 7, rate: 0.58 },
 }
+// 自転車（2026-11-24 本人「自転車も所々追加して」）: 徒歩より速く車より遅い・ガソリン不要・とてももろい・乗る人がむき出し・ジャンプ低め
+VT.bike = { name: '自転車', note: 'ガソリン不要・とてももろい', half: [0.9, 0.32], circles: [0.45, -0.45], r: 0.38, h: 1.7, mass: 0.25, armor: 0.3, ram: 0.15, maxF: 9.5, accel: 6, steer: 0.95, grip: 9, tank: Infinity, burn: 0, jump: 6, rate: 0, bike: true }
 export const VT_KEYS = Object.keys(VT)
 
 // BREAK THE ROUTE の手続きの車の形（W 半幅・L 半長・H 屋根・hood ボンネット・cabF/cabR 窓の前後・track 車輪の幅・wz 車軸・wr 車輪の半径）
 const SH = {
   kcar: { W: 0.74, L: 1.7, H: 1.42, hood: 0.45, cabF: 1.02, cabR: -1.6, track: 0.62, wz: 1.12, wr: 0.3, ww: 0.12, haunch: 1.0, gst: [[0, 0.92], [0.08, 1], [0.62, 1], [1, 0]], top: 0.88, roof: [0.06, 0.64] },
-  bus: { W: 1.28, L: 5.2, H: 2.5, hood: 1.2, cabF: 5.05, cabR: -5.1, track: 1.05, wz: 3.6, wz2: -2.4, wr: 0.5, ww: 0.2, haunch: 1.0, gst: [[0, 0.95], [0.03, 1], [0.97, 1], [1, 0.6]], top: 0.95, roof: [0.02, 0.98] },
+  bus: { W: 1.16, L: 3.9, H: 2.25, hood: 1.05, cabF: 3.75, cabR: -3.8, track: 0.98, wz: 2.6, wz2: -1.6, wr: 0.44, ww: 0.18, haunch: 1.0, gst: [[0, 0.95], [0.03, 1], [0.97, 1], [1, 0.6]], top: 0.95, roof: [0.02, 0.98] },
   dumpCab: { W: 1.22, L: 1.05, H: 2.2, hood: 1.05, cabF: 0.95, cabR: -1.0, track: 1.02, wz: 0.4, wr: 0.55, ww: 0.22, haunch: 1.0, gst: [[0, 1], [0.05, 1], [0.8, 1], [1, 0.5]], top: 0.92, roof: [0.03, 0.85] },
   keiCab: { W: 0.7, L: 0.62, H: 1.55, hood: 0.62, cabF: 0.56, cabR: -0.6, track: 0.6, wz: 0.25, wr: 0.29, ww: 0.13, haunch: 1.0, gst: [[0, 1], [0.05, 1], [0.6, 1], [1, 0.35]], top: 0.9, roof: [0.03, 0.75] },
 }
@@ -47,6 +49,30 @@ export function buildVehicle(type, color) {
   let car, ground
   if (type === 'sports') { car = new RealCar('runner', color); ground = -0.55 }
   else if (type === 'kcar' || type === 'bus') { car = new ProcCar(SH[type], color); ground = car.wheels[0].rest - car.WR }
+  else if (type === 'bike') {
+    const g = new THREE.Group(), frameM = new THREE.MeshPhysicalMaterial({ color, metalness: 0.5, roughness: 0.35, clearcoat: 0.8 })
+    const tube = (a, b, r = 0.022, m = frameM) => { const v = new THREE.Vector3().subVectors(b, a), o = new THREE.Mesh(new THREE.CylinderGeometry(r, r, v.length(), 6), m); o.position.copy(a).addScaledVector(v, 0.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.clone().normalize()); o.castShadow = true; g.add(o); return o }
+    const V = (x, y, z) => new THREE.Vector3(x, y, z), wr = 0.33
+    // 前が +z。車輪の中心の高さ wr
+    const rearC = V(0, wr, -0.52), frontC = V(0, wr, 0.55), crank = V(0, 0.3, -0.02), seat = V(0, 0.92, -0.22), head = V(0, 0.98, 0.42)
+    tube(rearC, crank); tube(crank, seat); tube(seat, rearC); tube(seat, head); tube(crank, head); tube(head, frontC, 0.02, M.chrome)
+    const bar = tube(V(-0.27, 1.1, 0.4), V(0.27, 1.1, 0.4), 0.018, M.black); tube(head, V(0, 1.1, 0.4), 0.02, M.chrome)
+    const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.05, 0.26), M.black); saddle.position.set(0, 0.96, -0.24); g.add(saddle)
+    const WG = wheelGeometries(wr, 0.03), wheels = []
+    for (const [c, front] of [[frontC, true], [rearC, false]]) {
+      const pivot = new THREE.Group(); pivot.position.copy(c); const spin = new THREE.Group()
+      const t = new THREE.Mesh(WG.tire, M.tire); t.castShadow = true
+      for (let i = 0; i < 12; i++) { const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, wr * 1.8, 4), M.chrome); sp.rotation.x = i / 12 * Math.PI; spin.add(sp) }
+      spin.add(t); pivot.add(spin); g.add(pivot); wheels.push({ pivot, w: spin, front, rest: c.y })
+    }
+    // ペダル（こぐと回る）
+    const ped = new THREE.Group(); ped.position.copy(crank); g.add(ped)
+    for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.17, 0.03), M.chrome); arm.position.set(sx * 0.08, sx * 0.08, 0); ped.add(arm); const pd = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.06), M.black); pd.position.set(sx * 0.12, sx * 0.16, 0); ped.add(pd) }
+    const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, 0.05), M.head); lamp.position.set(0, 1.0, 0.5); g.add(lamp)
+    const tl = new THREE.MeshStandardMaterial({ color: 0x400808, emissive: 0x7a0a0a, emissiveIntensity: 0.6 }); const rl = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.02), tl); rl.position.set(0, 0.8, -0.62); g.add(rl)
+    car = { group: g, wheels, paintMat: frameM, tailMat: tl, parts: {}, extra: { F: [lamp], B: [rl], L: [], R: [bar], bed: [saddle] }, pedal: ped }
+    ground = 0
+  }
   else if (type === 'kei') {
     // 軽トラ: 丸みのある運転台（BREAK THE ROUTE の断面の作り方）＋ 低いあおりの荷台と発泡の魚箱
     car = new ProcCar(SH.keiCab, color); ground = car.wheels[0].rest - car.WR
@@ -138,7 +164,7 @@ export function buildVehicle(type, color) {
   const paints = car.paintMats || [car.paintMat]
   const tail = []
   if (car.tailMat || car.brakeMat) tail.push({ material: car.tailMat || car.brakeMat })
-  return { g, body, paint: paints[0], paints, parts, wheels, dentList, tail, offsetX: 0, btr: car }
+  return { g, body, paint: paints[0], paints, parts, wheels, dentList, tail, offsetX: 0, btr: car, pedal: car.pedal, seat: type === 'bike' ? new THREE.Vector3(0.22, 0.75, 0) : null }
 }
 
 // アイテムの見た目（槍・磁石・ジェットの噴き出し口）を車の大きさに合わせて入れ物（pivot）に付ける

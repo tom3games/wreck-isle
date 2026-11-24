@@ -47,7 +47,7 @@ export const itemMethods = {
       if (!b.on) { b.t -= dt; if (b.t <= 0) { b.on = true; b.mesh.visible = true } continue }
       b.spin += dt * 0.9; const m = b.mesh.userData.box; m.rotation.y = b.spin; m.rotation.x = 0.35; m.rotation.z = 0.25; m.position.y = 0.95 + Math.sin(b.spin * 2) * 0.12
       for (const c of this.cars) {
-        if (!c.alive || !c.driver || Math.hypot(c.x - b.x, c.z - b.z) > 2.3) continue
+        if (!c.alive || !c.driver || c.T.bike || Math.hypot(c.x - b.x, c.z - b.z) > 2.3) continue
         b.on = false; b.t = 9; b.mesh.visible = false
         this.sound('boxbreak', b, 0.8)
         const p = new THREE.Vector3(b.x, b.y + 1, b.z), v = new THREE.Vector3(c.vx * 0.5, 2, c.vz * 0.5)
@@ -69,6 +69,7 @@ export const itemMethods = {
     if (c.rollT <= 0) { c.rollT = 0; c.item = c.rollPick; if (c === this.player) this.sound('latch', c, 0.7) }
   },
   useItem(c) {
+    if (c.T.bike) { if (this.t - (c.bellT || -9) > 0.6) { c.bellT = this.t; this.sound('bell', c, 0.9) } return } // 自転車はベル
     const k = c.item; if (!k || !c.alive) return
     c.item = null; this.ev.used[k] = (this.ev.used[k] || 0) + 1
     const [fx, fz] = c.fwd()

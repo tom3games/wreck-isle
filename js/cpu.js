@@ -34,7 +34,7 @@ export class Driver {
     }
     if (this.stuckT > 1.1) { this.stuckT = 0; this.backT = 0.9 + this.rng() * 0.6; this.backSteer = this.rng() < 0.5 ? 1 : -1; return }
     this.think -= dt
-    if (this.think <= 0) { this.think = 0.35 + this.rng() * 0.25; this.choose() }
+    if (this.think <= 0) { this.think = 0.35 + this.rng() * 0.25; this.choose(); if (!p.car) return } // 自転車から降りた
     const z = g.zone
     let tx, tz
     const zd = Math.hypot(c.x - z.x, c.z - z.z)
@@ -98,7 +98,7 @@ export class Driver {
     }
     return best
   }
-  spareNear(R, minHp) { const p = this.p; return this.g.cars.some(o => o.alive && !o.driver && o.hp > minHp && o.fuelK > 0.15 && Math.hypot(o.x - p.x, o.z - p.z) < R) }
+  spareNear(R, minHp) { const p = this.p; return this.g.cars.some(o => o.alive && !o.driver && !o.T.bike && o.hp > minHp && o.fuelK > 0.15 && Math.hypot(o.x - p.x, o.z - p.z) < R) }
   choose() {
     const c = this.c, g = this.g, z = g.zone
     let best = null, bs = 1e9
@@ -111,6 +111,12 @@ export class Driver {
     }
     this.target = best
     this.goal = null
+    // 自転車に乗っている時は、空いている車を探しに行き、そばで降りて乗り換える
+    if (c.T.bike) {
+      let bc = null, bd = 1e9
+      for (const o of g.cars) { if (!o.alive || o.driver || o.T.bike || o.stage >= 3 || o.groundAt(o.x, o.z) < -0.3) continue; const d = Math.hypot(o.x - c.x, o.z - c.z); if (d < bd) { bd = d; bc = o } }
+      if (bc) { this.goal = bc; if (bd < 7 && g.t - (this.p.exitT || -9) > 2) { g.exitCar(this.p); this.footGoal = bc } return }
+    }
     // ガソリンが少ない: 缶か給油所へ
     if (c.fuelK < 0.24) {
       let bb = null, bd = 1e9
@@ -134,10 +140,16 @@ export class Driver {
       let best = null, bs = 1e9
       for (const c of g.cars) {
         if (!c.alive || c.driver || c.stage >= 3 || c === this.avoidCar || (this.skip && this.skip.has(c)) || g.inRaid(c.x, c.z, 3) || c.groundAt(c.x, c.z) < -0.3) continue // 水に浸かった車は取りに行かない
-        const d = Math.hypot(c.x - B.x, c.z - B.z), s = d - c.hp * 0.15 - c.fuelK * 8 - (this.likes[c.type] || 0) + (Math.hypot(c.x - z.x, c.z - z.z) > z.r ? 60 : 0) + (c.fuel <= 0 ? 80 : 0)
+        const d = Math.hypot(c.x - B.x, c.z - B.z), s = d + (c.T.bike ? 25 : 0) - c.hp * 0.15 - c.fuelK * 8 - (this.likes[c.type] || 0) + (Math.hypot(c.x - z.x, c.z - z.z) > z.r ? 60 : 0) + (c.fuel <= 0 ? 80 : 0)
         if (s < bs) { bs = s; best = c }
       }
       this.footGoal = best
+    }
+    // 迫ってくる車を横へ飛んでよける（たまに）
+    if (!p.dive && g.t >= (p.diveReady || 0) && B.onGround) for (const c of g.cars) {
+      const sp = Math.hypot(c.vx, c.vz); if (!c.alive || sp < 8 || c.driver === p) continue
+      const rx = B.x - c.x, rz = B.z - c.z, ux = c.vx / sp, uz = c.vz / sp, along = rx * ux + rz * uz, lat = rx * uz - rz * ux
+      if (along > 0 && along < 12 && Math.abs(lat) < 2.2 && this.rng() < 0.08) { const sg = lat >= 0 ? 1 : -1; p.input = { mx: uz * sg, mz: -ux * sg }; p.wantDive = true; return }
     }
     const G = this.footGoal
     if (G && Math.hypot(G.x - B.x, G.z - B.z) < 3.0 && p.stun <= 0) { g.enterCar(p, G); this.stuckT = 0; this.backT = 0; this.prog = null; this.chk = null; return }
@@ -158,7 +170,7 @@ export class Driver {
     if (!this.fchk || t - this.fchk.t > 2.5) { if (this.fchk && Math.hypot(B.x - this.fchk.x, B.z - this.fchk.z) < 1 && G && p.stun <= 0) { (this.skip || (this.skip = new Set())).add(G); this.footGoal = null } this.fchk = { x: B.x, z: B.z, t } }
   }
   items(dt) {
-    const c = this.c, g = this.g, it = c.item; if (!it || c.rollT > 0) return
+    const c = this.c, g = this.g; if (!c) return; const it = c.item; if (!it || c.rollT > 0) return
     this.useT += dt
     const t = this.target, d = t ? Math.hypot(t.x - c.x, t.z - c.z) : 1e9
     const ahead = t ? Math.abs(ang(Math.atan2(t.x - c.x, t.z - c.z) - c.yaw)) : 9

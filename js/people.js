@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { moveBody } from './collide.js'
 import { Char, LOOKS } from './chars.js'
 
-export const FOOT = { hp: 60, run: 5.8, cpuRun: 5.4, reach: 3.4 }
+export const FOOT = { hp: 60, run: 4.4, dash: 6.2, cpuRun: 5.4, reach: 3.4 } // 歩き 4.4・Shift で 6.2（FUSE ISLE と同じ）
 const LK = ['player', 'fisher', 'hoodie', 'work', 'elder', 'jersey']
 
 export class Person {
@@ -27,10 +27,11 @@ export class Person {
 export const peopleMethods = {
   enterCar(p, c) {
     if (!p.alive || !c.alive || c.driver || p.car) return false
-    c.driver = p; p.car = c; p.char.root.visible = false; if (this.t > 0) this.ev.enters++
+    c.driver = p; p.car = c; p.char.root.visible = !!c.T.bike; if (p.dive) this.endDive(p); if (this.t > 0) this.ev.enters++
     if (c.item == null && p.heldItem) { c.item = p.heldItem } p.heldItem = null
     this.sound('latch', c, 0.6)
     if (p.isPlayer) this.toast(`${c.T.name}　${c.T.note}`)
+    if (c.T.bike) this.sound('bell', c, 0.5)
     return true
   },
   // 降りる。eject: 走っている車から飛び降りる（転がって少し痛い）
@@ -62,7 +63,17 @@ export const peopleMethods = {
     if (p.air && p.alive) { this.updateAir(p, dt); if (p.air) { if (p.air.mode !== 'plane') { this.syncAir(p, dt); p.char.update(dt, B) } return } p.yaw = p.aimYaw || p.yaw }
     if (!p.alive) { p.deadT2 = (p.deadT2 || 0) + dt; if (p.deadT2 > 3 && B.onGround) return; B.vx *= 0.9; B.vz *= 0.9; B.vy -= 20 * dt; moveBody(this.world, B, dt); p.char.update(dt, B); return }
     p.stun = Math.max(0, p.stun - dt)
-    const inp = p.input || {}, maxS = p.isPlayer ? FOOT.run : FOOT.cpuRun
+    const inp = p.input || {}, maxS = p.isPlayer ? (inp.run ? FOOT.dash : FOOT.run) : FOOT.cpuRun
+    // 飛び込み（FUSE ISLE と同じ: 0.25秒で 3.5m 飛ぶ → 0.5秒伏せる → 0.5秒で起きる。終わってから 1.2秒は次を飛べない）
+    if (p.wantDive) { p.wantDive = false; this.startDive(p, inp.mx || 0, inp.mz || 0) }
+    if (p.dive) {
+      const dv = p.dive; dv.t += dt; const T = dv.t
+      if (T < 0.25) { B.vx = dv.dx * 14; B.vz = dv.dz * 14 } else if (T < 0.75) { const kk = Math.exp(-dt * 20); B.vx *= kk; B.vz *= kk } else { B.vx = B.vz = 0 }
+      B.vy -= 20 * dt; B.hitWall = 0; B.h = 0.8
+      moveBody(this.world, B, dt); p.yaw = Math.atan2(dv.dx, dv.dz); p.char.yaw = p.yaw; p.char.update(dt, B)
+      if (T >= 1.25 || p.stun > 0) this.endDive(p)
+      return
+    }
     const tx = (inp.mx || 0) * maxS, tz = (inp.mz || 0) * maxS
     const ctl = p.stun > 0 ? 0.04 : B.onGround ? 1 : 0.12, k = Math.min(1, dt * 12 * ctl)
     if (B.onGround && p.stun <= 0) { B.vx += (tx - B.vx) * k; B.vz += (tz - B.vz) * k }
@@ -78,14 +89,29 @@ export const peopleMethods = {
     if (B.onGround && sp > 1) { p.stepAcc += dt * sp * 0.5; if (p.stepAcc > 1) { p.stepAcc = 0; this.sound('step', B, p.isPlayer ? 0.25 : 0.3) } }
     if (B.y < -1.2) { this.fx.splash(new THREE.Vector3(B.x, -1.4, B.z)); this.killPerson(p, null, 'sea') }
   },
+  startDive(p, dx, dz) {
+    const B = p.body
+    if (!p.alive || p.dive || p.car || p.air || p.stun > 0 || !B.onGround || this.t < (p.diveReady || 0)) return false
+    let l = Math.hypot(dx, dz); if (l < 0.01) { dx = Math.sin(p.yaw); dz = Math.cos(p.yaw); l = 1 }
+    p.dive = { t: 0, dx: dx / l, dz: dz / l }; p.diveReady = 1e9
+    B.vy = 2.4; B.onGround = false; p.char.dive(); this.sound('thud', B, 0.35)
+    return true
+  },
+  endDive(p) { if (!p.dive) return; p.dive = null; p.diveReady = this.t + 1.2; p.body.h = 1.75; p.char.endDive() },
+  // ぎりぎりの回避（FUSE ISLE と同じ演出: 青い「回避」と、全体の音を少しこもらせる）
+  nearMiss(p) { if (this.t - (p.avoidAt || -9) < 1.2) return; p.avoidAt = this.t; this.ev.avoids = (this.ev.avoids || 0) + 1; if (p === this.me) { this.toast('回避', 'avoid'); if (window.Snd && window.Snd.muffle) window.Snd.muffle(1.2) } },
   // 車が人に当たる: 速ければ吹っ飛ばしてすぐやられる
   personHits() {
     for (const p of this.ps) {
       if (p.car || p.air || !p.alive && p.char.dead) continue
       const B = p.body
       for (const c of this.cars) {
+        if (c.driver === p) continue
         const [a, b] = c.local(B.x, B.z)
         const HA = c.T.half[0], HB = c.T.half[1]
+        // ぎりぎりでよけた: 速い車が 2.5m 以内を通ったのに当たらなかった（飛び込みの最中か直後）
+        const spc = Math.hypot(c.vx, c.vz)
+        if (spc > 8 && (p.dive || this.t - (p.diveReady || -9) < 0.3) && Math.abs(a) < HA + 2.5 && Math.abs(b) < HB + 2.5 && (Math.abs(a) > HA + B.r || Math.abs(b) > HB + B.r)) this.nearMiss(p)
         if (Math.abs(a) > HA + B.r || Math.abs(b) > HB + B.r || B.y > c.y + c.T.h || B.y < c.y - 1) continue
         const sp = Math.hypot(c.vx, c.vz)
         if (sp > 2.5 && this.t - (p.ramT || -9) > 0.6) {

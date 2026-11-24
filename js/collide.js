@@ -2,6 +2,17 @@
 // 人は縦の円柱（半径 r・高さ h）。段差 STEP 以下は自動で上がる（階段は段の箱を並べる）。
 export const STEP = 0.42
 
+// 切妻屋根の上面の高さ（屋根の外なら -1e9）。屋根は見た目の板だけで当たりの箱が無いので、車はこれで屋根に乗る（WRECK ISLE 2026-11-24）
+export function roofAt(world, x, z) {
+  let h = -1e9
+  for (const r of world.roofs || []) {
+    if (x < r.x0 || x > r.x1 || z < r.z0 || z > r.z1) continue
+    const off = Math.abs((r.ridge === 'x' ? z : x) - r.c), y = r.base + 0.12 + r.rh * Math.max(0, 1 - off / r.half)
+    if (y > h) h = y
+  }
+  return h
+}
+
 export class World {
   constructor() { this.boxes = []; this.grid = new Map(); this.cell = 4; this.terrain = null }
   H(x, z) { return this.terrain ? this.terrain(x, z) : -1e9 }

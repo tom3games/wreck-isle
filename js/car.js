@@ -1,6 +1,6 @@
 // WRECK ISLE の車（軽トラ）。動き・壁と車どうしの当たり・壊れ方（へこみ・部品が飛ぶ・煙→黒煙→火→爆発）
 import * as THREE from 'three'
-import { pushOut } from './collide.js'
+import { pushOut, roofAt } from './collide.js'
 import { mat } from './level.js'
 import { VT, buildVehicle, makeAccessories } from './vehicles.js'
 
@@ -184,7 +184,7 @@ export class Car {
   local(x, z) { const [fx, fz] = this.fwd(), dx = x - this.x, dz = z - this.z; return [dx * fx + dz * fz, dx * -fz + dz * fx] }
   world(a, b) { const [fx, fz] = this.fwd(); return [this.x + fx * a - fz * b, this.z + fz * a + fx * b] }
   circles() { const [fx, fz] = this.fwd(); return this.T.circles.map(o => [this.x + fx * o, this.z + fz * o]) }
-  get fuelK() { return this.fuel / this.T.tank }
+  get fuelK() { return this.T.tank === Infinity ? 1 : this.fuel / this.T.tank }
   groundAt(x, z) {
     let h = this.g.world.H(x, z); if (h < -1e8) h = -9
     for (const b of this.g.world.near(x - 0.1, z - 0.1, x + 0.1, z + 0.1, [])) {
@@ -192,6 +192,7 @@ export class Car {
       const top = b.max[1]; if (top > this.y + 0.6 || top < this.y - 0.8 || b.max[1] - b.min[1] > 4) continue
       if (top > h) h = top
     }
+    const rf = roofAt(this.g.world, x, z); if (rf > h && rf <= this.y + 0.6 && rf >= this.y - 1.2) h = rf
     return h
   }
   settle() {
@@ -201,6 +202,8 @@ export class Car {
     // 高い方の車輪から 0.35m より下には沈めない。車体が箱の中に入ってしまった時は、その箱の上へ出す
     let gy = Math.max((W[0] + W[1] + W[2] + W[3]) / 4, Math.max(...W) - 0.35)
     const inTop = this.insideTop(); if (inTop > gy) gy = inTop
+    // 屋根の棟をまたいだ時: 真ん中の屋根の高さより大きく沈まない（車輪だけで見ると棟の下に入った）
+    const rc = roofAt(this.g.world, this.x, this.z); if (rc > -1e8 && rc <= this.y + 0.8 && rc >= this.y - 1.2) gy = Math.max(gy, rc - 0.2)
     this.pitch = Math.atan2((W[0] + W[1]) - (W[2] + W[3]), 4 * ha)
     this.roll = Math.atan2((W[0] + W[2]) - (W[1] + W[3]), 4 * hb)
     return gy
@@ -212,6 +215,8 @@ export class Car {
       if (b.dead || b.kind !== 'solid' || this.x < b.min[0] || this.x > b.max[0] || this.z < b.min[2] || this.z > b.max[2] || b.max[1] - b.min[1] > 4 || b.max[0] - b.min[0] < 1.2 || b.max[2] - b.min[2] < 1.2) continue // 薄い壁は横へ押し出す側で扱う
       if (b.min[1] < this.y + 0.3 && b.max[1] > this.y + 0.25 && b.max[1] < this.y + 2.5 && b.max[1] > t) t = b.max[1]
     }
+    // 屋根の中（天井の当たりの上・屋根の板の下）に入っていたら屋根の上へ
+    const rf = roofAt(this.g.world, this.x, this.z); if (rf > -1e8 && this.y > rf - 2.6 && this.y < rf - 0.05 && rf > t) t = rf
     return t
   }
   sync() {
@@ -277,7 +282,7 @@ export class Car {
       }
     }
     // 前・真ん中・後ろの3つの円（2つだと、跳ねて薄い壁（窓の下の壁・柵）をまたいで着地した時に、壁が円の間に挟まったまま抜けなかった）
-    const cs = this.T.circles.map(o => ({ x: nx + gx * o, z: nz + gz * o, y: this.y + 0.3, h: 1.5, r: this.T.r, vx: this.vx, vz: this.vz }))
+    const cs = this.T.circles.map(o => ({ x: nx + gx * o, z: nz + gz * o, y: this.y + 0.1, h: 1.6, r: this.T.r, vx: this.vx, vz: this.vz }))
     for (const c of cs) {
       const x0 = c.x, z0 = c.z; pushOut(g.world, c)
       const dx = c.x - x0, dz = c.z - z0, d = Math.hypot(dx, dz)
@@ -306,6 +311,12 @@ export class Car {
     this.wheelRot += vf * dt / 0.29
     for (const w of this.v3.wheels) { w.spin.rotation[w.axis] = w.sgn * this.wheelRot * (w.axis === 'x' ? 0.29 / 0.4 : 1); w.piv.rotation.y = w.front ? (w.axis === 'x' ? this.steer : -this.steer) : 0 }
     this.sync()
+    // 自転車: 乗っている人を席に置き、ペダルを回す（人は前かがみでこぐ動き）
+    if (this.T.bike) {
+      if (this.v3.pedal) this.v3.pedal.rotation.x -= vf * dt / 0.33 * 0.5
+      const p = this.driver
+      if (p && p.alive) { const [sx, sz] = this.world(-0.12, 0); p.body.x = sx; p.body.z = sz; p.body.y = this.y + 0.3; p.body.vx = this.vx * 0.35; p.body.vz = this.vz * 0.35; p.body.onGround = true; p.body.crouch = true; p.yaw = this.yaw; p.char.yaw = this.yaw; p.char.root.visible = true; p.char.update(dt, p.body) }
+    }
     this.effects(dt)
   }
   // 壊れ具合の見た目: 煙→黒煙→火。ジェットの炎
