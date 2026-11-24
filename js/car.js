@@ -1,8 +1,8 @@
 // WRECK ISLE の車（軽トラ）。動き・壁と車どうしの当たり・壊れ方（へこみ・部品が飛ぶ・煙→黒煙→火→爆発）
 import * as THREE from 'three'
-import { pushOut, roofAt, roofPush } from './collide.js?v=mwu9lb26'
-import { mat } from './level.js?v=mwu9lb26'
-import { VT, buildVehicle, makeAccessories } from './vehicles.js?v=mwu9lb26'
+import { pushOut, roofAt, roofPush } from './collide.js?v=mwuc41ax'
+import { mat } from './level.js?v=mwuc41ax'
+import { VT, buildVehicle, makeAccessories } from './vehicles.js?v=mwuc41ax'
 
 export const CAR = { half: [1.75, 0.72], top: 1.9, accel: 11, brake: 24, maxF: 19, maxR: 7, wheelbase: 2.2, steer: 0.62, grip: 7 }
 // 壊れの段階: 0 きれい / 1 煙 / 2 黒煙 / 3 火 / 爆発

@@ -1,6 +1,6 @@
 // CPU。道は 0.5m の格子（当たりの箱から作る）を A* でたどる。投げ・逃げ・投げ返しを自分で決める
-import { raycast, STEP } from './collide.js?v=mwu9lb26'
-import { GRAV } from './bombs.js?v=mwu9lb26'
+import { raycast, STEP } from './collide.js?v=mwuc41ax'
+import { GRAV } from './bombs.js?v=mwuc41ax'
 
 // 島を 50人用に広げた（2026-11-23）: x -330〜330・z -90〜600
 export const C = 0.5, X0 = -330, Z0 = -90, NX = 1320, NZ = 1380

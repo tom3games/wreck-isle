@@ -2,7 +2,7 @@
 // 建物は level.dress に {x,z,w,d,top,wins,doors,lv,off,rust} を積んでおく。汚れの板は南と同じ絵（south.js の grimeAtlas）
 import * as THREE from 'three'
 import { mergeGeometries } from '../vendor/jsm/utils/BufferGeometryUtils.js'
-import { grime, grimeAtlas } from './south.js?v=mwu9lb26'
+import { grime, grimeAtlas } from './south.js?v=mwuc41ax'
 
 const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
 

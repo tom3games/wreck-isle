@@ -1,9 +1,9 @@
 // アイテム: 島に散らした箱を拾うとくじ。壊れかけほど強い物が出やすい
 // 鉄球（前に転がす）／槍（正面で勝つ）／ジェット（加速・体当たり2倍）／地雷（後ろに置く・踏むと真上に跳ねる）／磁石（近くの車を引き寄せる）／修理（1段階戻す）
 import * as THREE from 'three'
-import { pushOut } from './collide.js?v=mwu9lb26'
-import { bombMesh, mineLook } from './bombs.js?v=mwu9lb26'
-import { REPAIR_TO } from './car.js?v=mwu9lb26'
+import { pushOut } from './collide.js?v=mwuc41ax'
+import { bombMesh, mineLook } from './bombs.js?v=mwuc41ax'
+import { REPAIR_TO } from './car.js?v=mwuc41ax'
 
 export const ITEMS = { ball: '鉄球', spear: '槍', jet: 'ジェット', mine: '地雷', magnet: '磁石', repair: '修理' }
 export const ITEMS_EN = { ball: 'Wrecking Ball', spear: 'Spear', jet: 'Jet', mine: 'Mine', magnet: 'Magnet', repair: 'Repair' }

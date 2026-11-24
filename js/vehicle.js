@@ -1,6 +1,6 @@
 // 軽トラ（乗れる・壊れる・はねる）。当たりは向きのある箱。世界とは前後2つの円でぶつける
 import * as THREE from 'three'
-import { pushOut } from './collide.js?v=mwu9lb26'
+import { pushOut } from './collide.js?v=mwuc41ax'
 
 export const VEH = { half: [1.75, 0.72], top: 1.9, accel: 9, brake: 18, maxF: 15, maxR: 5, wheelbase: 2.2, steer: 0.55, hp: 260 }
 

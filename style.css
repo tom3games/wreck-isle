@@ -147,7 +147,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 #jumpb svg{width:38px;height:38px}
 #jumpb kbd{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-family:"Barlow Condensed",sans-serif;font-size:13px;color:var(--dim)}
 #hud.air #jumpb{display:none}
-@media (pointer:coarse){#jumpb kbd{display:none}#jumpb{right:112px;bottom:calc(130px + env(safe-area-inset-bottom))}}
+@media (pointer:coarse){#jumpb kbd{display:none}#jumpb{right:112px;bottom:calc(130px + env(safe-area-inset-bottom))}#hud:not(.foot) #jumpb{display:none}} /* 車の時はジャンプのボタンを出さない（2026-11-24） */
 @media (pointer:fine){#jumpb{display:none}}
 
 /* 速さ（BREAK THE ROUTE のように大きな数字）と乗っている車の種類 */

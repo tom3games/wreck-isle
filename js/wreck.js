@@ -1,26 +1,26 @@
 // WRECK ISLE: 軽トラでぶつかり合って壊し合う。爆発したら負け、最後の1台が勝ち（FUSE ISLE の島と爆発を流用）
 import * as THREE from 'three'
-import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwu9lb26'
-import { World, raycast, roofAt } from './collide.js?v=mwu9lb26'
-import { Level } from './level.js?v=mwu9lb26'
-import { buildProps } from './props.js?v=mwu9lb26'
-import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwu9lb26'
-import { FX } from './fx.js?v=mwu9lb26'
-import { buildRails } from './rails.js?v=mwu9lb26'
-import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwu9lb26'
-import { preloadVehicles, VT } from './vehicles.js?v=mwu9lb26'
-import { Person, peopleMethods, FOOT } from './people.js?v=mwu9lb26'
-import { loadChars, setCharView } from './chars.js?v=mwu9lb26'
-import { dropMethods } from './wdrop.js?v=mwu9lb26'
-import { raidMethods } from './raid.js?v=mwu9lb26'
-import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwu9lb26'
-import { bombMesh } from './bombs.js?v=mwu9lb26'
-import { Minimap } from './minimap.js?v=mwu9lb26'
+import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwuc41ax'
+import { World, raycast, roofAt } from './collide.js?v=mwuc41ax'
+import { Level } from './level.js?v=mwuc41ax'
+import { buildProps } from './props.js?v=mwuc41ax'
+import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwuc41ax'
+import { FX } from './fx.js?v=mwuc41ax'
+import { buildRails } from './rails.js?v=mwuc41ax'
+import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwuc41ax'
+import { preloadVehicles, VT } from './vehicles.js?v=mwuc41ax'
+import { Person, peopleMethods, FOOT } from './people.js?v=mwuc41ax'
+import { loadChars, setCharView } from './chars.js?v=mwuc41ax'
+import { dropMethods } from './wdrop.js?v=mwuc41ax'
+import { raidMethods } from './raid.js?v=mwuc41ax'
+import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwuc41ax'
+import { bombMesh } from './bombs.js?v=mwuc41ax'
+import { Minimap } from './minimap.js?v=mwuc41ax'
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js'
-import { DriveGrid } from './drive.js?v=mwu9lb26'
-import { Driver } from './cpu.js?v=mwu9lb26'
-import { Nav } from './bots.js?v=mwu9lb26'
-import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwu9lb26'
+import { DriveGrid } from './drive.js?v=mwuc41ax'
+import { Driver } from './cpu.js?v=mwuc41ax'
+import { Nav } from './bots.js?v=mwuc41ax'
+import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwuc41ax'
 
 const Q = Object.fromEntries(new URLSearchParams(location.search))
 const $ = s => document.querySelector(s)
@@ -265,7 +265,7 @@ class Game {
     for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) {
       const A = cs[i], B = cs[j]
       if (Math.abs(A.x - B.x) > 5 || Math.abs(A.z - B.z) > 5) continue
-      // 踏みつけ: 上から落ちてきた車が下の車の屋根に乗ると、下の車が大きく壊れる
+      // 上から落ちてきた車（地雷・爆発で飛んだ）は下の車の屋根で跳ね返すだけ（踏みつけの大きな痛みは車のジャンプと一緒にやめた 2026-11-24 本人）
       { const dy = A.y - B.y
         if (Math.abs(dy) > 0.9 && Math.abs(dy) < 2.6) {
           const top = dy > 0 ? A : B, bot = top === A ? B : A
@@ -326,11 +326,10 @@ class Game {
   stomp(top, bot) {
     const key = 'st' + top.idx + ':' + bot.idx; if (this.t - (this.pairT.get(key) ?? -9) < 0.5) return; this.pairT.set(key, this.t)
     const p = new THREE.Vector3((top.x + bot.x) / 2, bot.y + 1.85, (top.z + bot.z) / 2), hard = -top.vy
-    top.y = bot.y + 1.9; top.vy = 5.5; top.air = true; top.jumped = false
-    bot.vy = Math.min(bot.vy, -2); bot.slideT = 0.6
-    this.ev.stomps = (this.ev.stomps || 0) + 1
-    this.impact(p, new THREE.Vector3(0, 1, 0), 30 + hard * 2, top, bot, hard)
-    if (bot.alive) this.damage(bot, 40 + hard * 3, top.alive ? top : null, p, ['L', 'R', 'F', 'B'][Math.floor(this.rng() * 4)], 'stomp', new THREE.Vector3(0, 3, 0))
+    top.y = bot.y + 1.9; top.vy = 3; top.air = true; top.jumped = false
+    const dx = top.x - bot.x, dz = top.z - bot.z, d = Math.hypot(dx, dz) || 1; top.vx += dx / d * 4; top.vz += dz / d * 4 // 横へ落とす
+    bot.slideT = 0.4
+    this.impact(p, new THREE.Vector3(0, 1, 0), 10 + hard, top, bot, hard * 0.4)
   }
   spearHit(c, p) { this.sound('spear', p, 0.8); for (let i = 0; i < 10; i++) this.fx.sprite({ map: window.__fxT.soft, add: true, pos: p.clone(), vel: new THREE.Vector3((Math.random() - 0.5) * 16, Math.random() * 8, (Math.random() - 0.5) * 16), size: 0.08, life: 0.4, hdr: [6, 6, 6], color2: 0xffd090, drag: 1.5, rise: -12, fadeIn: 0 }) }
   scrape(b, A, B) {
@@ -753,7 +752,7 @@ class Game {
       if (this.mode === 'title' && (e.code === 'Enter' || e.code === 'Space')) { this.begin(); return }
       // キー（2026-11-24 本人「Shift でジャンプはおかしい」）: 車でもアクションゲームの定番どおり Space がジャンプ・E がアイテム（左クリックでも）・F で乗り降り（FUSE ISLE と同じ）
       // 歩き: Space で跳ぶ・Shift を押している間だけ走る・C（か Ctrl）で飛び込み（FUSE ISLE の「走りながらしゃがむ」と同じ動き）
-      if (e.code === 'Space' && !e.repeat && this.mode === 'play' && this.me.alive && !this.me.air) { if (this.me.car) this.me.car.jump(); else this.me.wantJump = true; e.preventDefault() }
+      if (e.code === 'Space' && !e.repeat && this.mode === 'play' && this.me.alive && !this.me.air) { if (!this.me.car) this.me.wantJump = true; e.preventDefault() } // 車のジャンプはやめた（2026-11-24 本人）。車の時の Space は何もしない
       if (e.code === 'KeyE' && !e.repeat && this.mode === 'play' && this.player && this.countT <= 0) this.useItem(this.player)
       if ((e.code === 'KeyC' || e.code === 'ControlLeft') && !e.repeat && this.mode === 'play' && this.me.alive && !this.me.car && !this.me.air) this.me.wantDive = true
       if (e.code === 'KeyF' && !e.repeat) { if (this.me.air) this.airAct(this.me); else this.toggleCar() }
@@ -788,7 +787,7 @@ class Game {
     $('#gear').addEventListener('pointerdown', e => { e.preventDefault(); this.touch.rev = !this.touch.rev; $('#gear').classList.toggle('on', this.touch.rev); this.sound('tick', this.me, 0.4) })
     $('#use').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play' && this.player && this.countT <= 0) this.useItem(this.player) })
     $('#door').addEventListener('pointerdown', e => { e.preventDefault(); if (this.me.air) this.airAct(this.me); else this.toggleCar() })
-    $('#jumpb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode !== 'play' || !this.me.alive) return; if (this.me.car) this.me.car.jump(); else if (!this.me.air) this.me.wantJump = true })
+    $('#jumpb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode !== 'play' || !this.me.alive) return; if (!this.me.car && !this.me.air) this.me.wantJump = true })
     $('#diveb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play' && this.me.alive && !this.me.car && !this.me.air) this.me.wantDive = true })
     $('#mapb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play') this.bigMap = !this.bigMap })
     // 歩きの時だけ: 左手のスティック（触った所に出る）

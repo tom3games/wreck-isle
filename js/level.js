@@ -1,11 +1,11 @@
 // 漁港の一角（約60m四方）。見た目と当たりを同じデータから作る。
 // 座標: x が東、z が南（陸）、-z が北（海）。地面の上面 y=0、海面 y=-1.6。
 import * as THREE from 'three'
-import { L as tr } from './i18n.js?v=mwu9lb26'
+import { L as tr } from './i18n.js?v=mwuc41ax'
 import { mergeGeometries } from '../vendor/jsm/utils/BufferGeometryUtils.js'
-import { buildAreas } from './area.js?v=mwu9lb26'
-import { buildNorth } from './north.js?v=mwu9lb26'
-import { dressNorth, stdInfo } from './dress.js?v=mwu9lb26'
+import { buildAreas } from './area.js?v=mwuc41ax'
+import { buildNorth } from './north.js?v=mwuc41ax'
+import { dressNorth, stdInfo } from './dress.js?v=mwuc41ax'
 
 const TEX = './assets/tex/'
 const loader = new THREE.TextureLoader()

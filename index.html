@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=mwu9lb26">
+<link rel="stylesheet" href="style.css?v=mwuc41ax">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 <script>
   window.addEventListener('error', e => { const el = document.getElementById('err'); if (el && !window.__fiReady) { el.textContent = (/[?&]lang=en/.test(location.search) || (!/[?&]lang=ja/.test(location.search) && !/^ja/i.test(navigator.language || 'ja')) ? 'Failed to start: ' : '起動に失敗しました: ') + (e.message || e); el.style.display = 'block' } })
@@ -45,17 +45,16 @@
   <div class="how">
     <dl class="pc">
       <dt>A D ← →</dt><dd data-en="Steer (always on the gas) · S ↓ to reverse">ハンドル（アクセルは踏みっぱなし）・S ↓ でバック</dd>
-      <dt>Space</dt><dd data-en="Jump (land on a car to stomp it)">ジャンプ（車で上から落ちると踏みつけ）</dd>
-      <dt data-en="E · Left click">E・左クリック</dt><dd data-en="Use item (rings the bell on a bike)">アイテムを使う（自転車はベル）</dd>
+            <dt data-en="E · Left click">E・左クリック</dt><dd data-en="Use item (rings the bell on a bike)">アイテムを使う（自転車はベル）</dd>
       <dt>F</dt><dd data-en="Jump out · Chute · Get in / out">飛び降りる・傘・乗り降り</dd>
-      <dt data-en="On foot">歩き</dt><dd data-en="WASD · Shift to sprint · C to dive and dodge">WASD・Shift で走る・C で飛び込んでよける</dd>
+      <dt data-en="On foot">歩き</dt><dd data-en="WASD · Shift to sprint · Space to jump · C to dive and dodge">WASD・Shift で走る・Space で跳ぶ・C で飛び込んでよける</dd>
       <dt data-en="Mouse · M">マウス・M</dt><dd data-en="Look around · Island map">見回す・島の地図</dd>
     </dl>
     <dl class="tp">
       <dt data-en="Bottom left">左下</dt><dd data-en="Steer (always on the gas)">ハンドル（アクセルは踏みっぱなし）</dd>
       <dt>R</dt><dd data-en="Tap to switch drive / reverse">押すたびに前進とバックを切り替え</dd>
-      <dt data-en="Bottom right">右下</dt><dd data-en="Item · Jump · Door (get in / out)">アイテム・ジャンプ・ドア（乗り降り）</dd>
-      <dt data-en="On foot">歩き</dt><dd data-en="Move with your left thumb (push all the way to run) · Dive button to dodge">左手で動かす（端まで倒すと走る）・飛び込みのボタンでよける</dd>
+      <dt data-en="Bottom right">右下</dt><dd data-en="Item · Door (get in / out)">アイテム・ドア（乗り降り）</dd>
+      <dt data-en="On foot">歩き</dt><dd data-en="Move with your left thumb (push all the way to run) · Jump and dive buttons">左手で動かす（端まで倒すと走る）・跳ぶボタンと飛び込みのボタン</dd>
     </dl>
     <p class="note" data-en="Side and rear hits do the most damage. Head-on, both cars suffer. Jump from the plane wherever you like, find a car on the island and get in. Driving burns fuel; refill with red cans or at the gas station. If your car explodes with you inside, you lose. When it catches fire, bail out and find an empty car. On foot you are helpless.">横と後ろからの体当たりはよく壊れる。正面同士は痛み分け。輸送機から好きな所で飛び降りて、島に置いてある軽トラに乗り込んで始まる。ガソリンは走るほど減る。赤い缶と給油所で足せる。車が爆発する時に乗っていたら負け。火が出たら飛び降りて、空いている車を探せ。歩いている人は無力。</p>
     <button id="start" data-en="START">はじめる</button>
@@ -68,7 +67,7 @@
   <ul id="feed"></ul>
   <div id="zone"></div>
   <div id="dropx"></div>
-  <button id="jumpb" aria-label="ジャンプ" data-en-label="Jump"><svg viewBox="0 0 48 48"><path d="M14 22l10-10 10 10" fill="none" stroke="#f4efe6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="11" y="30" width="26" height="9" rx="2" fill="none" stroke="#f4efe6" stroke-width="3"/><circle cx="17" cy="40" r="2.5" fill="#f4efe6"/><circle cx="31" cy="40" r="2.5" fill="#f4efe6"/></svg><kbd>Space</kbd></button>
+  <button id="jumpb" aria-label="ジャンプ" data-en-label="Jump"><svg viewBox="0 0 48 48"><path d="M12 26l12-12 12 12" fill="none" stroke="#f4efe6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 15v21" stroke="#f4efe6" stroke-width="4" stroke-linecap="round"/><path d="M14 40h20" stroke="rgba(244,239,230,.5)" stroke-width="3" stroke-linecap="round"/></svg><kbd>Space</kbd></button>
   <button id="mapb" aria-label="地図" data-en-label="Map"><svg viewBox="0 0 48 48"><path d="M6 12l11-4 14 4 11-4v28l-11 4-14-4-11 4z" fill="none" stroke="#f4efe6" stroke-width="3" stroke-linejoin="round"/><path d="M17 8v28M31 12v28" stroke="#f4efe6" stroke-width="2.5"/></svg><kbd>M</kbd></button>
   <svg id="dmg" viewBox="0 0 40 80" data-st="0"><path class="b" d="M8 6h24a4 4 0 0 1 4 4v22H4V10a4 4 0 0 1 4-4z"/><path class="g" d="M8 12h24v8H8z"/><path class="b" d="M5 35h30v39a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/><path class="l" d="M9 41h22M9 49h22M9 57h22M9 65h22"/></svg>
   <svg id="fuel" viewBox="0 0 60 40"><path class="arc" d="M8 34a22 22 0 0 1 44 0"/><path class="red" d="M8 34a22 22 0 0 1 4.6-13.5"/><text x="3" y="40">E</text><text x="51" y="40">F</text><g class="nd"><path d="M30 34V14"/></g><circle cx="30" cy="34" r="3"/><path class="pump" d="M25 22h6v9h-6zM31 24l3 2v4"/></svg>
@@ -97,7 +96,7 @@
 </section>
 
 <script src="js/sfx.js"></script>
-<script type="module" src="js/wreck.js?v=mwu9lb26"></script>
-<script src="support.js?v=mwu9lb26"></script>
+<script type="module" src="js/wreck.js?v=mwuc41ax"></script>
+<script src="support.js?v=mwuc41ax"></script>
 </body>
 </html>

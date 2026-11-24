@@ -1,7 +1,7 @@
 // 50人用の大きな陸（2026-11-23）。今の島（北の港町）を幅 40m ほどの海峡を挟んでコの字に囲み、橋 3本でつなぐ。
 // 全体はおよそ x -322〜322・z -72〜592（約 640m × 660m）。北が -z、東が +x。
 // 地形の高さは「今の島が陸ならその高さ、海なら新しい陸の高さ」（area.js の terrainH が呼ぶ）
-import { cS } from './southmap.js?v=mwu9lb26'
+import { cS } from './southmap.js?v=mwuc41ax'
 
 const ss = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 const lerp = (a, b, k) => a + (b - a) * k

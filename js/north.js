@@ -1,9 +1,9 @@
 // 北の海側: 西の L 字の防波堤（赤灯台）、東の防波堤（白灯台）、フェリー乗り場と乗れるフェリー、浮き桟橋、魚市場
 // 防波堤は細い。内側の縁は人だけ止める見えない柵（爆風で浮けば海へ落ちる）
 import * as THREE from 'three'
-import { L as tr } from './i18n.js?v=mwu9lb26'
-import { mat } from './level.js?v=mwu9lb26'
-import { fishingBoat } from './props.js?v=mwu9lb26'
+import { L as tr } from './i18n.js?v=mwuc41ax'
+import { mat } from './level.js?v=mwuc41ax'
+import { fishingBoat } from './props.js?v=mwuc41ax'
 
 function col(world, x0, y0, z0, x1, y1, z1, kind = 'solid') { return world.add({ min: [Math.min(x0, x1), y0, Math.min(z0, z1)], max: [Math.max(x0, x1), y1, Math.max(z0, z1)], kind }) }
 

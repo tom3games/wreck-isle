@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from '../vendor/jsm/libs/meshopt_decoder.module.js'
 import * as SkeletonUtils from '../vendor/jsm/utils/SkeletonUtils.js'
-import { raycast } from './collide.js?v=mwu9lb26'
+import { raycast } from './collide.js?v=mwuc41ax'
 
 const D = './assets/chars/'
 const gl = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder) // 公開版は動きの素材を meshopt で縮めている

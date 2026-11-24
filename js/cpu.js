@@ -57,14 +57,7 @@ export class Driver {
     if (Math.abs(da) > 2.4 && sp < 4 && dist < 14) { thr = -1; steer = -steer }
     c.input = { throttle: thr, steer }
     this.items(dt)
-    // ジャンプでよける: 向かってくる鉄球・前の作動中の地雷・爆撃の円の中（たまに）
-    if (!c.air && g.t - (c.jumpT ?? -9) > 1.6) {
-      let j = false
-      for (const b of g.balls) { const dx = c.x - b.x, dz = c.z - b.z, d = Math.hypot(dx, dz); if (b.owner !== c && d < 11 && (b.vx * dx + b.vz * dz) / (d || 1) > 6) j = true }
-      for (const m of g.mines) if (m.state === 1 && m.owner !== c) { const [a, bb] = c.local(m.x, m.z); if (a > 1 && a < 6 && Math.abs(bb) < 1.2 && sp > 6) j = true }
-      if (g.inRaid(c.x, c.z) && this.rng() < dt * 0.5) j = true
-      if (j && this.rng() < 0.7) c.jump()
-    }
+    // ジャンプでよける動きは、車のジャンプと一緒にやめた（2026-11-24 本人）
     this.hornT -= dt
     if (this.hornT < 0 && this.target && Math.hypot(this.target.x - c.x, this.target.z - c.z) < 18 && Math.abs(da) < 0.3 && sp > 10) { this.hornT = 6 + this.rng() * 8; g.sound('horn', c, 0.55) }
   }
