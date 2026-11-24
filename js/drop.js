@@ -3,8 +3,8 @@
 // 主（ホスト）が全員の降下を計算し、参加者は air の状態（0 地上・1 機内・2 落下・3 傘）を受け取って描くだけ。
 // game.js の Game.prototype に混ぜて使う（this は Game）
 import * as THREE from 'three'
-import { moveBody } from './collide.js?v=mwur1e4h'
-import { DROP, planeAt, makePlane, makeChute } from './plane.js?v=mwur1e4h'
+import { moveBody } from './collide.js?v=mwuunvpt'
+import { DROP, planeAt, makePlane, makeChute } from './plane.js?v=mwuunvpt'
 
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a))
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v))

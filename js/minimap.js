@@ -1,9 +1,9 @@
 // 左上の小さな地図（島の古い案内図のような紙の色）。島・川・道・建物は起動時に1回だけ画像に描き、毎コマは自分の向き（矢印）と円だけを重ねる。
 // 北が上で固定。敵の位置は出さない（読み合いが芯のため）。
-import { ROADS } from './southmap.js?v=mwur1e4h'
-import { L as tr } from './i18n.js?v=mwur1e4h'
-import { ROADS2, TRAIL, BRIDGES2 } from './bigmap.js?v=mwur1e4h'
-import { planeAt, DROP } from './plane.js?v=mwur1e4h'
+import { ROADS } from './southmap.js?v=mwuunvpt'
+import { L as tr } from './i18n.js?v=mwuunvpt'
+import { ROADS2, TRAIL, BRIDGES2 } from './bigmap.js?v=mwuunvpt'
+import { planeAt, DROP } from './plane.js?v=mwuunvpt'
 
 // 島全体（50人用に広げた 2026-11-23）は 1m=0.8px で1枚に描いておき、画面には自分のまわり VIEW m だけを切り出して見せる
 const X0 = -340, X1 = 340, Z0 = -96, Z1 = 608, KB = 0.8, VIEW = 230

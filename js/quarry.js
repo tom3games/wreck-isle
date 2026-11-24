@@ -1,10 +1,10 @@
 // 東の採石場: 段の掘り跡（地形は area.js）、砕石の工場とベルトコンベア、積み出し桟橋と運搬船、
 // 重機（ショベル・ダンプ）、現場事務所、仮設トイレ、火薬庫（中の火薬の箱は連鎖して爆発する）
 import * as THREE from 'three'
-import { L as tr } from './i18n.js?v=mwur1e4h'
-import { colFromMesh } from './colmesh.js?v=mwur1e4h'
-import { mat } from './level.js?v=mwur1e4h'
-import { terrainH, QUARRY } from './area.js?v=mwur1e4h'
+import { L as tr } from './i18n.js?v=mwuunvpt'
+import { colFromMesh } from './colmesh.js?v=mwuunvpt'
+import { mat } from './level.js?v=mwuunvpt'
+import { terrainH, QUARRY } from './area.js?v=mwuunvpt'
 
 const yellow = () => new THREE.MeshStandardMaterial({ color: 0xd8a21c, roughness: 0.5, metalness: 0.2 })
 const steelM = () => new THREE.MeshStandardMaterial({ color: 0x6f7478, roughness: 0.55, metalness: 0.75 })

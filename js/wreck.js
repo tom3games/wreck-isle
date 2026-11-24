@@ -1,26 +1,26 @@
 // WRECK ISLE: 軽トラでぶつかり合って壊し合う。爆発したら負け、最後の1台が勝ち（FUSE ISLE の島と爆発を流用）
 import * as THREE from 'three'
-import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwur1e4h'
-import { World, raycast, roofAt } from './collide.js?v=mwur1e4h'
-import { Level } from './level.js?v=mwur1e4h'
-import { buildProps } from './props.js?v=mwur1e4h'
-import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwur1e4h'
-import { FX } from './fx.js?v=mwur1e4h'
-import { buildRails } from './rails.js?v=mwur1e4h'
-import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwur1e4h'
-import { preloadVehicles, VT } from './vehicles.js?v=mwur1e4h'
-import { Person, peopleMethods, FOOT } from './people.js?v=mwur1e4h'
-import { loadChars, setCharView } from './chars.js?v=mwur1e4h'
-import { dropMethods } from './wdrop.js?v=mwur1e4h'
-import { raidMethods } from './raid.js?v=mwur1e4h'
-import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwur1e4h'
-import { bombMesh } from './bombs.js?v=mwur1e4h'
-import { Minimap } from './minimap.js?v=mwur1e4h'
+import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwuunvpt'
+import { World, raycast, roofAt } from './collide.js?v=mwuunvpt'
+import { Level } from './level.js?v=mwuunvpt'
+import { buildProps } from './props.js?v=mwuunvpt'
+import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwuunvpt'
+import { FX } from './fx.js?v=mwuunvpt'
+import { buildRails } from './rails.js?v=mwuunvpt'
+import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwuunvpt'
+import { preloadVehicles, VT } from './vehicles.js?v=mwuunvpt'
+import { Person, peopleMethods, FOOT } from './people.js?v=mwuunvpt'
+import { loadChars, setCharView } from './chars.js?v=mwuunvpt'
+import { dropMethods } from './wdrop.js?v=mwuunvpt'
+import { raidMethods } from './raid.js?v=mwuunvpt'
+import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwuunvpt'
+import { bombMesh } from './bombs.js?v=mwuunvpt'
+import { Minimap } from './minimap.js?v=mwuunvpt'
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js'
-import { DriveGrid } from './drive.js?v=mwur1e4h'
-import { Driver } from './cpu.js?v=mwur1e4h'
-import { Nav } from './bots.js?v=mwur1e4h'
-import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwur1e4h'
+import { DriveGrid } from './drive.js?v=mwuunvpt'
+import { Driver } from './cpu.js?v=mwuunvpt'
+import { Nav } from './bots.js?v=mwuunvpt'
+import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwuunvpt'
 
 const Q = Object.fromEntries(new URLSearchParams(location.search))
 const $ = s => document.querySelector(s)
@@ -627,7 +627,7 @@ class Game {
     const k = this.keys, T = this.touch
     const left = k.KeyA || k.ArrowLeft || T.l, right = k.KeyD || k.ArrowRight || T.r
     const fwd = k.KeyW || k.ArrowUp, back = k.KeyS || k.ArrowDown
-    const throttle = back ? -1 : fwd ? 1 : T.gas ? (T.rev ? -1 : 1) : 0
+    const throttle = back || T.rev ? -1 : fwd || T.gas ? 1 : 0   // 2026-11-25 本人「普通にアクセルボタンとバックボタン用意して」: 切り替えをやめ、どちらも押している間だけ
     const want = ((left ? 1 : 0) - (right ? 1 : 0)) * 0.72
     const rate = want === 0 ? 4.5 : Math.sign(want) !== Math.sign(this.pSteer || 0) && this.pSteer ? 5 : 2.6
     this.pSteer = (this.pSteer || 0) + (want - (this.pSteer || 0)) * Math.min(1, dt * rate)
@@ -799,7 +799,7 @@ class Game {
       el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off)
     }
     hold($('#tl'), 'l'); hold($('#tr'), 'r'); hold($('#gas'), 'gas')
-    $('#gear').addEventListener('pointerdown', e => { e.preventDefault(); this.touch.rev = !this.touch.rev; $('#gear').classList.toggle('on', this.touch.rev); this.sound('tick', this.me, 0.4) })
+    hold($('#gear'), 'rev')
     $('#use').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play' && this.player && this.countT <= 0) this.useItem(this.player) })
     $('#door').addEventListener('pointerdown', e => { e.preventDefault(); if (this.me.air) this.airAct(this.me); else this.toggleCar() })
     $('#jumpb').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode !== 'play' || !this.me.alive) return; if (!this.me.car && !this.me.air) this.me.wantJump = true })

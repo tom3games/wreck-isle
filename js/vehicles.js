@@ -1,7 +1,7 @@
 // 車の種類（2026-11-23 本人「車の種類と特徴増やして」）。見た目は BREAK THE ROUTE の作り方（断面をつないだ曲面の車体・クリア塗装・実車モデル）を流用
 // 速さ・重さ・硬さ・ガソリンの数字に加えて、形と大きさとエンジン音（同じ録音の高さを変える）で違いが分かるようにする
 import * as THREE from 'three'
-import { ProcCar, RealCar, loadCarModel, carModelReady, sharedMats, wheelGeometries } from './btrcar.js?v=mwur1e4h'
+import { ProcCar, RealCar, loadCarModel, carModelReady, sharedMats, wheelGeometries } from './btrcar.js?v=mwuunvpt'
 
 // half: 前後と左右の半分の長さ（m）。circles: 当たりの円の前後の位置。r: 円の半径
 // mass: 重さ（ぶつかった時の押し合い）。armor: 硬さ（受ける壊れを割る）。ram: 体当たりの強さ
