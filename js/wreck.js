@@ -1,26 +1,26 @@
 // WRECK ISLE: 軽トラでぶつかり合って壊し合う。爆発したら負け、最後の1台が勝ち（FUSE ISLE の島と爆発を流用）
 import * as THREE from 'three'
-import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwuc41ax'
-import { World, raycast, roofAt } from './collide.js?v=mwuc41ax'
-import { Level } from './level.js?v=mwuc41ax'
-import { buildProps } from './props.js?v=mwuc41ax'
-import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwuc41ax'
-import { FX } from './fx.js?v=mwuc41ax'
-import { buildRails } from './rails.js?v=mwuc41ax'
-import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwuc41ax'
-import { preloadVehicles, VT } from './vehicles.js?v=mwuc41ax'
-import { Person, peopleMethods, FOOT } from './people.js?v=mwuc41ax'
-import { loadChars, setCharView } from './chars.js?v=mwuc41ax'
-import { dropMethods } from './wdrop.js?v=mwuc41ax'
-import { raidMethods } from './raid.js?v=mwuc41ax'
-import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwuc41ax'
-import { bombMesh } from './bombs.js?v=mwuc41ax'
-import { Minimap } from './minimap.js?v=mwuc41ax'
+import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwuqry6n'
+import { World, raycast, roofAt } from './collide.js?v=mwuqry6n'
+import { Level } from './level.js?v=mwuqry6n'
+import { buildProps } from './props.js?v=mwuqry6n'
+import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwuqry6n'
+import { FX } from './fx.js?v=mwuqry6n'
+import { buildRails } from './rails.js?v=mwuqry6n'
+import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwuqry6n'
+import { preloadVehicles, VT } from './vehicles.js?v=mwuqry6n'
+import { Person, peopleMethods, FOOT } from './people.js?v=mwuqry6n'
+import { loadChars, setCharView } from './chars.js?v=mwuqry6n'
+import { dropMethods } from './wdrop.js?v=mwuqry6n'
+import { raidMethods } from './raid.js?v=mwuqry6n'
+import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwuqry6n'
+import { bombMesh } from './bombs.js?v=mwuqry6n'
+import { Minimap } from './minimap.js?v=mwuqry6n'
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js'
-import { DriveGrid } from './drive.js?v=mwuc41ax'
-import { Driver } from './cpu.js?v=mwuc41ax'
-import { Nav } from './bots.js?v=mwuc41ax'
-import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwuc41ax'
+import { DriveGrid } from './drive.js?v=mwuqry6n'
+import { Driver } from './cpu.js?v=mwuqry6n'
+import { Nav } from './bots.js?v=mwuqry6n'
+import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwuqry6n'
 
 const Q = Object.fromEntries(new URLSearchParams(location.search))
 const $ = s => document.querySelector(s)
@@ -132,7 +132,7 @@ class Game {
     this.skid.count = 0; this.skid.frustumCulled = false; this.scene.add(this.skid); this.skidN = 0
     this.debris = new Debris(this.scene, this.world)
     this.cars = []; this.ps = []; this.boxes = []; this.balls = []; this.mines = []; this.cans = []; this.pumps = []; this.fuelK = 1
-    this.keys = {}; this.touch = { l: false, r: false, rev: false, mx: 0, mz: 0 }
+    this.keys = {}; this.touch = { l: false, r: false, rev: false, gas: false, mx: 0, mz: 0 }
     this.bindInput()
     window.addEventListener('resize', () => this.resize()); this.resize()
     this.defSounds()
@@ -594,7 +594,7 @@ class Game {
       if (!go || !p.alive) { if (p.car) p.car.input = { throttle: 0, steer: 0 }; p.input = { mx: 0, mz: 0 } }
       else if (p.air) { if (!p.ai) { p.input = this.footInput(); p.aimYaw = this.camYaw } }
       else if (p.ai) p.ai.update(dt)
-      else if (p.car) p.car.input = this.playerInput()
+      else if (p.car) p.car.input = this.playerInput(dt)
       else p.input = this.footInput()
     }
     for (const c of this.cars) c.update(dt)
@@ -613,11 +613,18 @@ class Game {
     else if (!this.me.alive && this.t - this.me.deadT > 3 && !this.resultShown) this.showResult()
     this.gullT = (this.gullT ?? 6) - dt; if (this.gullT < 0) { this.gullT = 10 + this.rng() * 14; this.sound('gull', { x: this.zone.x + (this.rng() - 0.5) * 60, y: 12, z: this.zone.z + (this.rng() - 0.5) * 60 }, 0.4) }
   }
-  playerInput() {
+  // 2026-11-24 本人「自動アクセルはやめて。曲がるのが早すぎて操作がむずい」: アクセルは W ↑・画面のペダルを押している間だけ。
+  // ハンドルは自分の車だけ、ゆっくり切れてゆっくり戻る（CPU の車は今のまま）
+  playerInput(dt = 1 / 60) {
     const k = this.keys, T = this.touch
     const left = k.KeyA || k.ArrowLeft || T.l, right = k.KeyD || k.ArrowRight || T.r
-    const rev = k.KeyS || k.ArrowDown || T.rev
-    return { throttle: rev ? -1 : 1, steer: (left ? 1 : 0) - (right ? 1 : 0) }
+    const fwd = k.KeyW || k.ArrowUp, back = k.KeyS || k.ArrowDown
+    const throttle = back ? -1 : fwd ? 1 : T.gas ? (T.rev ? -1 : 1) : 0
+    const want = ((left ? 1 : 0) - (right ? 1 : 0)) * 0.72
+    const rate = want === 0 ? 4.5 : Math.sign(want) !== Math.sign(this.pSteer || 0) && this.pSteer ? 5 : 2.6
+    this.pSteer = (this.pSteer || 0) + (want - (this.pSteer || 0)) * Math.min(1, dt * rate)
+    if (Math.abs(this.pSteer) < 0.002 && want === 0) this.pSteer = 0
+    return { throttle, steer: this.pSteer }
   }
   // 歩き: キーはカメラの向きに対して、画面は左手のスティック
   footInput() {
@@ -783,7 +790,7 @@ class Game {
       const on = e => { e.preventDefault(); this.touch[k] = true; el.classList.add('on') }, off = e => { e.preventDefault(); this.touch[k] = false; el.classList.remove('on') }
       el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('pointerleave', off)
     }
-    hold($('#tl'), 'l'); hold($('#tr'), 'r')
+    hold($('#tl'), 'l'); hold($('#tr'), 'r'); hold($('#gas'), 'gas')
     $('#gear').addEventListener('pointerdown', e => { e.preventDefault(); this.touch.rev = !this.touch.rev; $('#gear').classList.toggle('on', this.touch.rev); this.sound('tick', this.me, 0.4) })
     $('#use').addEventListener('pointerdown', e => { e.preventDefault(); if (this.mode === 'play' && this.player && this.countT <= 0) this.useItem(this.player) })
     $('#door').addEventListener('pointerdown', e => { e.preventDefault(); if (this.me.air) this.airAct(this.me); else this.toggleCar() })

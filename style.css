@@ -50,7 +50,7 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
 #spec.on{opacity:1}
 
 /* 操作ボタン（指で触る画面だけ） */
-.pad,#gear{display:none}
+.pad,#gear,#gas{display:none}
 #use{position:absolute;right:22px;bottom:calc(24px + env(safe-area-inset-bottom));width:92px;height:92px;border-radius:50%;border:2px solid rgba(244,239,230,.35);background:rgba(16,18,18,.45);pointer-events:auto;display:grid;place-items:center;touch-action:none;transition:border-color .2s,background .2s}
 #use .ic{width:58px;height:58px;display:block}
 #use .ic svg{width:100%;height:100%;display:block}
@@ -66,6 +66,10 @@ button{font:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
   .arrow{width:86px;height:86px;border-radius:22px;border:2px solid rgba(244,239,230,.3);background:rgba(16,18,18,.42);display:grid;place-items:center;touch-action:none}
   .arrow svg{width:46px;height:46px}.arrow path{fill:none;stroke:var(--ink);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
   .arrow.on{background:rgba(244,239,230,.25);border-color:var(--ink)}
+  #gas{display:block;position:absolute;right:112px;bottom:calc(128px + env(safe-area-inset-bottom));width:74px;height:98px;border:0;background:none;pointer-events:auto;touch-action:none;padding:0}
+  #gas svg{width:100%;height:100%}#gas rect{fill:rgba(16,18,18,.5);stroke:rgba(244,239,230,.45);stroke-width:2.5}#gas path{stroke:rgba(244,239,230,.55);stroke-width:3;stroke-linecap:round}
+  #gas.on rect{fill:rgba(224,176,33,.45);stroke:var(--amber)}
+  #hud.foot #gas{display:none}
   #gear{display:block;position:absolute;right:128px;bottom:calc(30px + env(safe-area-inset-bottom));width:54px;height:84px;border:0;background:none;pointer-events:auto;touch-action:none}
   #gear svg{width:100%;height:100%;overflow:visible}
   #gear .slot{fill:rgba(16,18,18,.55);stroke:rgba(244,239,230,.4);stroke-width:2}

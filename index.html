@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=mwuc41ax">
+<link rel="stylesheet" href="style.css?v=mwuqry6n">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 <script>
   window.addEventListener('error', e => { const el = document.getElementById('err'); if (el && !window.__fiReady) { el.textContent = (/[?&]lang=en/.test(location.search) || (!/[?&]lang=ja/.test(location.search) && !/^ja/i.test(navigator.language || 'ja')) ? 'Failed to start: ' : '起動に失敗しました: ') + (e.message || e); el.style.display = 'block' } })
@@ -44,15 +44,17 @@
   </div>
   <div class="how">
     <dl class="pc">
-      <dt>A D ← →</dt><dd data-en="Steer (always on the gas) · S ↓ to reverse">ハンドル（アクセルは踏みっぱなし）・S ↓ でバック</dd>
+      <dt>W ↑ ・ S ↓</dt><dd data-en="Gas · Brake and reverse">アクセル・ブレーキとバック</dd>
+      <dt>A D ← →</dt><dd data-en="Steer">ハンドル</dd>
             <dt data-en="E · Left click">E・左クリック</dt><dd data-en="Use item (rings the bell on a bike)">アイテムを使う（自転車はベル）</dd>
       <dt>F</dt><dd data-en="Jump out · Chute · Get in / out">飛び降りる・傘・乗り降り</dd>
       <dt data-en="On foot">歩き</dt><dd data-en="WASD · Shift to sprint · Space to jump · C to dive and dodge">WASD・Shift で走る・Space で跳ぶ・C で飛び込んでよける</dd>
       <dt data-en="Mouse · M">マウス・M</dt><dd data-en="Look around · Island map">見回す・島の地図</dd>
     </dl>
     <dl class="tp">
-      <dt data-en="Bottom left">左下</dt><dd data-en="Steer (always on the gas)">ハンドル（アクセルは踏みっぱなし）</dd>
-      <dt>R</dt><dd data-en="Tap to switch drive / reverse">押すたびに前進とバックを切り替え</dd>
+      <dt data-en="Bottom left">左下</dt><dd data-en="Steer">ハンドル</dd>
+      <dt data-en="Pedal">ペダル</dt><dd data-en="Hold to drive">押している間だけ進む</dd>
+      <dt>R</dt><dd data-en="Tap to switch drive / reverse (the pedal then backs up)">押すたびに前進とバックを切り替え（バックの時はペダルで下がる）</dd>
       <dt data-en="Bottom right">右下</dt><dd data-en="Item · Door (get in / out)">アイテム・ドア（乗り降り）</dd>
       <dt data-en="On foot">歩き</dt><dd data-en="Move with your left thumb (push all the way to run) · Jump and dive buttons">左手で動かす（端まで倒すと走る）・跳ぶボタンと飛び込みのボタン</dd>
     </dl>
@@ -80,6 +82,7 @@
     <button id="tl" class="arrow" aria-label="左" data-en-label="Left"><svg viewBox="0 0 48 48"><path d="M30 10L14 24l16 14" /></svg></button>
     <button id="tr" class="arrow" aria-label="右" data-en-label="Right"><svg viewBox="0 0 48 48"><path d="M18 10l16 14-16 14" /></svg></button>
   </div>
+  <button id="gas" aria-label="アクセル" data-en-label="Gas"><svg viewBox="0 0 48 64"><rect x="8" y="4" width="32" height="56" rx="8"/><path d="M15 16h18M15 26h18M15 36h18M15 46h18"/></svg></button>
   <button id="gear" aria-label="前進とバック" data-en-label="Drive / Reverse"><svg viewBox="0 0 40 64"><rect class="slot" x="15" y="6" width="10" height="52" rx="5"/><text class="d" x="33" y="16">D</text><text class="r" x="33" y="56">R</text><circle class="knob" cx="20" cy="17" r="11"/></svg></button>
   <button id="door" aria-label="乗る・降りる" data-en-label="Get in / out"><svg viewBox="0 0 48 48"><path class="fr" d="M10 40V12a3 3 0 0 1 3-3h14l9 9v22z"/><path class="wn" d="M14 13h12l6 6v3H14z"/><path class="hd" d="M27 27h6"/></svg><span class="nm"></span><kbd>F</kbd></button>
   <button id="use" aria-label="アイテム" data-en-label="Item"><span class="ic"></span><span class="nm"></span><kbd>E</kbd></button>
@@ -96,7 +99,7 @@
 </section>
 
 <script src="js/sfx.js"></script>
-<script type="module" src="js/wreck.js?v=mwuc41ax"></script>
-<script src="support.js?v=mwuc41ax"></script>
+<script type="module" src="js/wreck.js?v=mwuqry6n"></script>
+<script src="support.js?v=mwuqry6n"></script>
 </body>
 </html>

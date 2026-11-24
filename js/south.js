@@ -1,12 +1,12 @@
 // 南の低地: 住宅地・川と橋・林と草・島をひと回りする道・給油所・畑・南の海岸（2026-11-22）
 // 地形の形は southmap.js（area.js の terrainH と同じ数字）。当たりは見た目と同じ箱データ（level.B）か、見た目の形から作る（colFromMesh）
 import * as THREE from 'three'
-import { L as tr } from './i18n.js?v=mwuc41ax'
+import { L as tr } from './i18n.js?v=mwuqry6n'
 import { mergeGeometries } from '../vendor/jsm/utils/BufferGeometryUtils.js'
-import { mat } from './level.js?v=mwuc41ax'
-import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwuc41ax'
-import { colFromMesh } from './colmesh.js?v=mwuc41ax'
-import { RING, STREET_Z, ROADS, BRIDGES, WOODS, riverC, riverW, riverEdge, coastD, roadDist, PASS_X } from './southmap.js?v=mwuc41ax'
+import { mat } from './level.js?v=mwuqry6n'
+import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwuqry6n'
+import { colFromMesh } from './colmesh.js?v=mwuqry6n'
+import { RING, STREET_Z, ROADS, BRIDGES, WOODS, riverC, riverW, riverEdge, coastD, roadDist, PASS_X } from './southmap.js?v=mwuqry6n'
 
 const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
 const col = (world, x0, y0, z0, x1, y1, z1, kind = 'solid') => world.add({ min: [Math.min(x0, x1), y0, Math.min(z0, z1)], max: [Math.max(x0, x1), y1, Math.max(z0, z1)], kind })

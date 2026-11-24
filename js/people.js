@@ -1,9 +1,9 @@
 // 乗っている人（あなた・CPU）。車を降りると人として走れる。人は無力: 攻撃できず、車に当たると吹っ飛んですぐやられる
 // 負け: 人がやられる（車が爆発した時に乗っていた・はねられた・円の外・海）
 import * as THREE from 'three'
-import { L as tr, EN } from './i18n.js?v=mwuc41ax'
-import { moveBody } from './collide.js?v=mwuc41ax'
-import { Char, LOOKS } from './chars.js?v=mwuc41ax'
+import { L as tr, EN } from './i18n.js?v=mwuqry6n'
+import { moveBody } from './collide.js?v=mwuqry6n'
+import { Char, LOOKS } from './chars.js?v=mwuqry6n'
 
 export const FOOT = { hp: 60, run: 4.4, dash: 6.2, cpuRun: 5.4, reach: 3.4 } // 歩き 4.4・Shift で 6.2（FUSE ISLE と同じ）
 const LK = ['player', 'fisher', 'hoodie', 'work', 'elder', 'jersey']

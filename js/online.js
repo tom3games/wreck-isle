@@ -2,10 +2,10 @@
 // 主は 20回/秒で状態を配り、参加者は入力と操作（投げる・拾う・乗る）を送る。
 // 参加者の自分の動きは先読みで動かし、主の答えとのずれを少しずつ詰める。
 import * as THREE from 'three'
-import { moveBody } from './collide.js?v=mwuc41ax'
-import { bombMesh, mineLook, TYPES } from './bombs.js?v=mwuc41ax'
-import { Bot } from './bots.js?v=mwuc41ax'
-import { AIR_CODE, AIR_MODE } from './drop.js?v=mwuc41ax'
+import { moveBody } from './collide.js?v=mwuqry6n'
+import { bombMesh, mineLook, TYPES } from './bombs.js?v=mwuqry6n'
+import { Bot } from './bots.js?v=mwuqry6n'
+import { AIR_CODE, AIR_MODE } from './drop.js?v=mwuqry6n'
 
 const $ = s => document.querySelector(s)
 const r2 = v => Math.round(v * 100) / 100

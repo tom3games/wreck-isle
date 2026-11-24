@@ -1,16 +1,16 @@
 // 港のまわりのエリア: 南の森と丘（灯台・展望台）、西の集落（商店・番屋・斜路・神社）
 // 地面の高さ terrainH は当たり（collide.js）と見た目の両方で使う
 import * as THREE from 'three'
-import { L as tr } from './i18n.js?v=mwuc41ax'
-import { mat } from './level.js?v=mwuc41ax'
-import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwuc41ax'
-import { buildQuarry } from './quarry.js?v=mwuc41ax'
-import { colFromMesh } from './colmesh.js?v=mwuc41ax'
-import { southMod, southTex, Z_END, PASS_X } from './southmap.js?v=mwuc41ax'
-import { landH, landTex, sandbarH } from './bigmap.js?v=mwuc41ax'
-import { buildSouth, house2 } from './south.js?v=mwuc41ax'
-import { buildMainland } from './mainland.js?v=mwuc41ax'
-import { stdInfo } from './dress.js?v=mwuc41ax'
+import { L as tr } from './i18n.js?v=mwuqry6n'
+import { mat } from './level.js?v=mwuqry6n'
+import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwuqry6n'
+import { buildQuarry } from './quarry.js?v=mwuqry6n'
+import { colFromMesh } from './colmesh.js?v=mwuqry6n'
+import { southMod, southTex, Z_END, PASS_X } from './southmap.js?v=mwuqry6n'
+import { landH, landTex, sandbarH } from './bigmap.js?v=mwuqry6n'
+import { buildSouth, house2 } from './south.js?v=mwuqry6n'
+import { buildMainland } from './mainland.js?v=mwuqry6n'
+import { stdInfo } from './dress.js?v=mwuqry6n'
 
 const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 function bump(x, z) { return Math.sin(x * 0.11 + z * 0.07) * 0.5 + Math.sin(x * 0.043 - z * 0.12) * 0.7 + Math.sin(x * 0.21 + z * 0.19) * 0.15 }
