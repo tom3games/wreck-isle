@@ -1,21 +1,21 @@
 // 車の種類（2026-11-23 本人「車の種類と特徴増やして」）。見た目は BREAK THE ROUTE の作り方（断面をつないだ曲面の車体・クリア塗装・実車モデル）を流用
 // 速さ・重さ・硬さ・ガソリンの数字に加えて、形と大きさとエンジン音（同じ録音の高さを変える）で違いが分かるようにする
 import * as THREE from 'three'
-import { ProcCar, RealCar, loadCarModel, carModelReady, sharedMats, wheelGeometries } from './btrcar.js'
+import { ProcCar, RealCar, loadCarModel, carModelReady, sharedMats, wheelGeometries } from './btrcar.js?v=mwu9lb26'
 
 // half: 前後と左右の半分の長さ（m）。circles: 当たりの円の前後の位置。r: 円の半径
 // mass: 重さ（ぶつかった時の押し合い）。armor: 硬さ（受ける壊れを割る）。ram: 体当たりの強さ
 // tank: ガソリンの量（満タン）。burn: 減りやすさ。jump: ジャンプの勢い。rate: エンジン音の高さ
 export const VT = {
-  kei:    { name: '軽トラ', note: 'ふつう', half: [1.75, 0.72], circles: [1.05, 0, -1.05], r: 0.8, h: 1.9, mass: 1, armor: 1, ram: 1, maxF: 19, accel: 11, steer: 0.62, grip: 7, tank: 100, burn: 1, jump: 11.2, rate: 1 },
-  kcar:   { name: '軽自動車', note: '速くて小回り・もろい', half: [1.7, 0.74], circles: [0.95, 0, -0.95], r: 0.8, h: 1.75, mass: 0.75, armor: 0.72, ram: 0.8, maxF: 22, accel: 14, steer: 0.78, grip: 8, tank: 80, burn: 0.75, jump: 11.5, rate: 1.25 },
-  sports: { name: 'スポーツカー', note: 'いちばん速い・もろい・ガソリンが少ない', half: [2.25, 0.98], circles: [1.35, 0, -1.35], r: 0.95, h: 1.3, mass: 0.9, armor: 0.7, ram: 1, maxF: 29, accel: 19, steer: 0.66, grip: 9, tank: 60, burn: 1.35, jump: 11.2, rate: 1.55 },
-  buggy:  { name: 'バギー', note: '高く跳ぶ・軽い', half: [1.6, 0.95], circles: [0.9, 0, -0.9], r: 0.9, h: 1.6, mass: 0.6, armor: 0.65, ram: 0.7, maxF: 22, accel: 16, steer: 0.8, grip: 6, tank: 70, burn: 0.85, jump: 15.5, rate: 1.4 },
-  dump:   { name: 'ダンプ', note: '遅い・硬い・体当たりが強い・ガソリンを食う', half: [3.1, 1.25], circles: [2.1, 0.7, -0.7, -2.1], r: 1.2, h: 3.0, mass: 2.6, armor: 2.2, ram: 1.9, maxF: 15, accel: 7, steer: 0.45, grip: 9, tank: 120, burn: 1.8, jump: 8.5, rate: 0.68 },
-  bus:    { name: 'バス', note: 'とても硬い・遅い・的が大きい', half: [3.9, 1.18], circles: [2.95, 1.45, 0, -1.45, -2.95], r: 1.15, h: 2.85, mass: 3.4, armor: 3, ram: 1.6, maxF: 13.5, accel: 5.5, steer: 0.4, grip: 9, tank: 130, burn: 2, jump: 7, rate: 0.58 },
+  kei:    { name: '軽トラ', note: 'ふつう', en: 'Kei Truck', noteEn: 'All-rounder', half: [1.75, 0.72], circles: [1.05, 0, -1.05], r: 0.8, h: 1.9, mass: 1, armor: 1, ram: 1, maxF: 19, accel: 11, steer: 0.62, grip: 7, tank: 100, burn: 1, jump: 11.2, rate: 1 },
+  kcar:   { name: '軽自動車', note: '速くて小回り・もろい', en: 'Kei Car', noteEn: 'Quick and nimble · fragile', half: [1.7, 0.74], circles: [0.95, 0, -0.95], r: 0.8, h: 1.75, mass: 0.75, armor: 0.72, ram: 0.8, maxF: 22, accel: 14, steer: 0.78, grip: 8, tank: 80, burn: 0.75, jump: 11.5, rate: 1.25 },
+  sports: { name: 'スポーツカー', note: 'いちばん速い・もろい・ガソリンが少ない', en: 'Sports Car', noteEn: 'Fastest · fragile · small tank', half: [2.25, 0.98], circles: [1.35, 0, -1.35], r: 0.95, h: 1.3, mass: 0.9, armor: 0.7, ram: 1, maxF: 29, accel: 19, steer: 0.66, grip: 9, tank: 60, burn: 1.35, jump: 11.2, rate: 1.55 },
+  buggy:  { name: 'バギー', note: '高く跳ぶ・軽い', en: 'Buggy', noteEn: 'Jumps high · light', half: [1.6, 0.95], circles: [0.9, 0, -0.9], r: 0.9, h: 1.6, mass: 0.6, armor: 0.65, ram: 0.7, maxF: 22, accel: 16, steer: 0.8, grip: 6, tank: 70, burn: 0.85, jump: 15.5, rate: 1.4 },
+  dump:   { name: 'ダンプ', note: '遅い・硬い・体当たりが強い・ガソリンを食う', en: 'Dump Truck', noteEn: 'Slow · tough · hits hard · thirsty', half: [3.1, 1.25], circles: [2.1, 0.7, -0.7, -2.1], r: 1.2, h: 3.0, mass: 2.6, armor: 2.2, ram: 1.9, maxF: 15, accel: 7, steer: 0.45, grip: 9, tank: 120, burn: 1.8, jump: 8.5, rate: 0.68 },
+  bus:    { name: 'バス', note: 'とても硬い・遅い・的が大きい', en: 'Bus', noteEn: 'Very tough · slow · big target', half: [3.9, 1.18], circles: [2.95, 1.45, 0, -1.45, -2.95], r: 1.15, h: 2.85, mass: 3.4, armor: 3, ram: 1.6, maxF: 13.5, accel: 5.5, steer: 0.4, grip: 9, tank: 130, burn: 2, jump: 7, rate: 0.58 },
 }
 // 自転車（2026-11-24 本人「自転車も所々追加して」）: 徒歩より速く車より遅い・ガソリン不要・とてももろい・乗る人がむき出し・ジャンプ低め
-VT.bike = { name: '自転車', note: 'ガソリン不要・とてももろい', half: [0.9, 0.32], circles: [0.45, -0.45], r: 0.38, h: 1.7, mass: 0.25, armor: 0.3, ram: 0.15, maxF: 9.5, accel: 6, steer: 0.95, grip: 9, tank: Infinity, burn: 0, jump: 6, rate: 0, bike: true }
+VT.bike = { name: '自転車', note: 'ガソリン不要・とてももろい', en: 'Bike', noteEn: 'No fuel · very fragile', half: [0.9, 0.32], circles: [0.45, -0.45], r: 0.38, h: 1.7, mass: 0.25, armor: 0.3, ram: 0.15, maxF: 9.5, accel: 6, steer: 0.95, grip: 9, tank: Infinity, burn: 0, jump: 6, rate: 0, bike: true }
 export const VT_KEYS = Object.keys(VT)
 
 // BREAK THE ROUTE の手続きの車の形（W 半幅・L 半長・H 屋根・hood ボンネット・cabF/cabR 窓の前後・track 車輪の幅・wz 車軸・wr 車輪の半径）

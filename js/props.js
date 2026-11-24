@@ -1,9 +1,10 @@
 // 小物: Poly Haven の模型（CC0）と、日本の漁港らしい物を手で組んだ物
 import * as THREE from 'three'
+import { L as tr } from './i18n.js?v=mwu9lb26'
 import { GLTFLoader } from '../vendor/jsm/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from '../vendor/jsm/libs/meshopt_decoder.module.js'
-import { mat } from './level.js'
-import { buildPoles } from './poles.js'
+import { mat } from './level.js?v=mwu9lb26'
+import { buildPoles } from './poles.js?v=mwu9lb26'
 
 const gl = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
 const cache = new Map()
@@ -134,7 +135,7 @@ function keiTruck(scene, x, z) {
   }
   const plate = document.createElement('canvas'); plate.width = 256; plate.height = 128
   const pg = plate.getContext('2d'); pg.fillStyle = '#f2d23a'; pg.fillRect(0, 0, 256, 128); pg.strokeStyle = '#222'; pg.lineWidth = 6; pg.strokeRect(4, 4, 248, 120)
-  pg.fillStyle = '#1f3a1f'; pg.font = '700 30px "Zen Kaku Gothic New", sans-serif'; pg.textAlign = 'center'; pg.fillText('西浦 480', 128, 44); pg.font = '700 52px sans-serif'; pg.fillText('あ 12-34', 128, 106)
+  pg.fillStyle = '#1f3a1f'; pg.font = '700 30px "Zen Kaku Gothic New", sans-serif'; pg.textAlign = 'center'; pg.fillText(tr('西浦 480', 'NISHIURA'), 128, 44); pg.font = '700 52px sans-serif'; pg.fillText(tr('あ 12-34', '12-34'), 128, 106)
   const pt = new THREE.CanvasTexture(plate); pt.colorSpace = THREE.SRGBColorSpace
   const pm = new THREE.Mesh(new THREE.PlaneGeometry(0.33, 0.165), new THREE.MeshStandardMaterial({ map: pt, roughness: 0.4 })); pm.position.set(3.44, 0.62, 0); pm.rotation.y = Math.PI / 2; g.add(pm)
   g.position.set(x, 0, z + 0.72)
@@ -157,7 +158,7 @@ function vending(scene, x, z, i) {
     g.fillStyle = r === 0 ? '#ff3a2a' : '#3ad2ff'; g.font = '700 14px sans-serif'; g.textAlign = 'center'; g.fillText(r === 0 ? '160' : '130', bx + 32, by + 118)
   }
   g.fillStyle = r0(i); g.font = '700 46px "Zen Kaku Gothic New", sans-serif'; g.textAlign = 'center'
-  g.fillText(i === 0 ? 'つめた〜い' : 'あったか〜い', 256, 660)
+  g.fillText(i === 0 ? tr('つめた〜い', 'COLD') : tr('あったか〜い', 'HOT'), 256, 660)
   g.fillStyle = '#222'; g.fillRect(150, 860, 212, 90)
   g.fillStyle = '#555'; g.fillRect(390, 700, 60, 100)
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8

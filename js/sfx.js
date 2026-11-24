@@ -34,8 +34,14 @@ const Snd = {
     const urls = new Set(Object.values(this.files).flat().concat(Object.values(this.loops).filter(Boolean).map(l => l.url)))
     await Promise.all([...urls].filter(u => u && !this.bufs[u]).map(async u => {
       this.bufs[u] = 'loading'
-      try { const ab = await (await fetch(u)).arrayBuffer(); this.bufs[u] = await new Promise((ok, ng) => this.ctx.decodeAudioData(ab, ok, ng)) } catch (e) { delete this.bufs[u] }   // 古い Safari はコールバック形しか無い
+      try { const ab = await (this.raw && this.raw[u] ? this.raw[u] : fetch(u).then(r => r.arrayBuffer())); if (this.raw) delete this.raw[u]; this.bufs[u] = await new Promise((ok, ng) => this.ctx.decodeAudioData(ab, ok, ng)) } catch (e) { delete this.bufs[u] }   // 古い Safari はコールバック形しか無い
     }))
+  },
+  // 読み込み画面のうちに音のファイルを取っておく（押す前は音の口を作れないので、ほどくのは押した時）。遊び始めてから通信しない
+  prefetch(extra = []) {
+    this.raw = this.raw || {}
+    const urls = new Set(Object.values(this.files).flat().concat(extra))
+    return Promise.all([...urls].filter(u => u && !this.raw[u] && !this.bufs[u]).map(u => (this.raw[u] = fetch(u).then(r => r.arrayBuffer())).catch(() => { delete this.raw[u] })))
   },
   setMute(m) { this.muted = m; if (this.master) this.master.gain.value = m || this.away ? 0 : 0.9 },
   // ページを離れる時: ループを全部止め（何を鳴らしていたかは覚える）、スピーカー手前を0にして suspend

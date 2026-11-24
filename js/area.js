@@ -1,15 +1,16 @@
 // 港のまわりのエリア: 南の森と丘（灯台・展望台）、西の集落（商店・番屋・斜路・神社）
 // 地面の高さ terrainH は当たり（collide.js）と見た目の両方で使う
 import * as THREE from 'three'
-import { mat } from './level.js'
-import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js'
-import { buildQuarry } from './quarry.js'
-import { colFromMesh } from './colmesh.js'
-import { southMod, southTex, Z_END, PASS_X } from './southmap.js'
-import { landH, landTex, sandbarH } from './bigmap.js'
-import { buildSouth, house2 } from './south.js'
-import { buildMainland } from './mainland.js'
-import { stdInfo } from './dress.js'
+import { L as tr } from './i18n.js?v=mwu9lb26'
+import { mat } from './level.js?v=mwu9lb26'
+import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwu9lb26'
+import { buildQuarry } from './quarry.js?v=mwu9lb26'
+import { colFromMesh } from './colmesh.js?v=mwu9lb26'
+import { southMod, southTex, Z_END, PASS_X } from './southmap.js?v=mwu9lb26'
+import { landH, landTex, sandbarH } from './bigmap.js?v=mwu9lb26'
+import { buildSouth, house2 } from './south.js?v=mwu9lb26'
+import { buildMainland } from './mainland.js?v=mwu9lb26'
+import { stdInfo } from './dress.js?v=mwu9lb26'
 
 const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 function bump(x, z) { return Math.sin(x * 0.11 + z * 0.07) * 0.5 + Math.sin(x * 0.043 - z * 0.12) * 0.7 + Math.sin(x * 0.21 + z * 0.19) * 0.15 }
@@ -327,7 +328,7 @@ export function shop(level, scene, x, z) {
   // 棚と台
   for (let i = 0; i < 3; i++) level.B(x + 1.2 + i * 2.6, 0, z + d - 0.7, x + 3.0 + i * 2.6, 1.8, z + d - 0.3, 'darkWood')
   level.B(x + 2.5, 0, z + 2.2, x + 6.5, 0.9, z + 3.0, 'wood')
-  level.sign(x + w / 2, h + 0.55, z - 0.02, Math.PI, '西浦商店', 5.2, 0.8)
+  level.sign(x + w / 2, h + 0.55, z - 0.02, Math.PI, tr('西浦商店', 'NISHIURA STORE'), 5.2, 0.8)
   for (let i = 0; i < 7; i++) level.B(x + 0.9 + i * 1.02, 2.5, z - 0.95, x + 1.9 + i * 1.02 - 0.02, 2.56, z - 0.05, i % 2 ? 'paint' : 'pumpRed', { nocol: true }) // 日よけの縞
   level.dress.push({ x, z, w, d, top: 3.2, wins: {}, doors: { N: [{ a: x + 1, b: x + w - 1 }], E: [{ a: z + 2, b: z + 3.4 }] }, lv: 3, off: 0.115 })
   // 看板は北（道）向き: sign は PlaneGeometry の表が +z なので π 回す

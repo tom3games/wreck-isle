@@ -1,8 +1,8 @@
 // WRECK ISLE の車（軽トラ）。動き・壁と車どうしの当たり・壊れ方（へこみ・部品が飛ぶ・煙→黒煙→火→爆発）
 import * as THREE from 'three'
-import { pushOut, roofAt } from './collide.js'
-import { mat } from './level.js'
-import { VT, buildVehicle, makeAccessories } from './vehicles.js'
+import { pushOut, roofAt, roofPush } from './collide.js?v=mwu9lb26'
+import { mat } from './level.js?v=mwu9lb26'
+import { VT, buildVehicle, makeAccessories } from './vehicles.js?v=mwu9lb26'
 
 export const CAR = { half: [1.75, 0.72], top: 1.9, accel: 11, brake: 24, maxF: 19, maxR: 7, wheelbase: 2.2, steer: 0.62, grip: 7 }
 // 壊れの段階: 0 きれい / 1 煙 / 2 黒煙 / 3 火 / 爆発
@@ -157,7 +157,8 @@ export class Car {
     this.name = name; this.paintName = name === 'あなた' ? '白' : name; this.color = color
     this.driver = null; this.fuel = this.T.tank; this.lampT = 0
     this.v3 = buildVehicle(type, color)
-    this.pivot = new THREE.Group(); game.scene.add(this.pivot); this.pivot.add(this.v3.g); this.v3.g.position.set(this.v3.offsetX, 0, 0)
+    this.pivot = new THREE.Group(); game.scene.add(this.pivot); { const pv = this.pivot, up = THREE.Object3D.prototype.updateMatrixWorld; pv.updateMatrixWorld = function (f) { if (this.matrixWorldAutoUpdate === false && !f) return; up.call(this, f) } } // 眠っている車は中の部品ごと形の計算を飛ばす
+    this.pivot.add(this.v3.g); this.v3.g.position.set(this.v3.offsetX, 0, 0)
     Object.assign(this.v3, makeAccessories(this.T, this.pivot))
     this.x = x; this.z = z; this.yaw = yaw; this.y = surfaceAt(game.world, x, z)
     this.vx = 0; this.vz = 0; this.vy = 0; this.w = 0; this.steer = 0; this.wheelRot = 0
@@ -216,10 +217,11 @@ export class Car {
       if (b.min[1] < this.y + 0.3 && b.max[1] > this.y + 0.25 && b.max[1] < this.y + 2.5 && b.max[1] > t) t = b.max[1]
     }
     // 屋根の中（天井の当たりの上・屋根の板の下）に入っていたら屋根の上へ
-    const rf = roofAt(this.g.world, this.x, this.z); if (rf > -1e8 && this.y > rf - 2.6 && this.y < rf - 0.05 && rf > t) t = rf
+    const rf = roofAt(this.g.world, this.x, this.z); if (rf > -1e8 && this.y > rf - 0.8 && this.y < rf - 0.05 && rf > t) t = rf // 少しだけ入った時だけ上へ（深く入る前に横へ押し出している）
     return t
   }
   sync() {
+    this.pivot.matrixWorldAutoUpdate = this.pivot.visible; this._mDirty = 2 // 眠っている車は形の計算（行列）を毎コマしない。動かしたら 2コマは計算する
     this.pivot.rotation.set(-this.roll + this.flipZ, this.yaw + Math.PI / 2, this.pitch + this.flipX, 'YZX')
     this.pivot.position.set(this.x, this.y, this.z)
   }
@@ -231,6 +233,8 @@ export class Car {
   }
   update(dt) {
     const g = this.g
+    // 止まっている空き車は眠らせる（車を増やしても重くならないように）。押されたり乗られたりしたら起きる
+    if (!this.driver && !this.air && this.vy === 0 && Math.abs(this.vx) + Math.abs(this.vz) + Math.abs(this.w) < 0.02 && (this.stage < 3 || !this.alive) && !this.jetT && !this.magT) { this.sleepT = (this.sleepT || 0) + dt; if (this.sleepT > 1) { this.vx = this.vz = this.w = 0; if (this.stage >= 1) this.effects(dt); if (this._mDirty > 0) this._mDirty--; else this.pivot.matrixWorldAutoUpdate = false; return } } else this.sleepT = 0
     let inp = this.alive && this.driver ? this.input : { throttle: 0, steer: 0 }
     // ガソリン: 走るほど減る（ジェット中は多く減る）。0 で止まる
     if (this.fuel <= 0) { inp = { throttle: 0, steer: inp.steer || 0 }; if (this.jetT > 0) this.jetT = 0.001 }
@@ -287,6 +291,11 @@ export class Car {
       const x0 = c.x, z0 = c.z; pushOut(g.world, c)
       const dx = c.x - x0, dz = c.z - z0, d = Math.hypot(dx, dz)
       if (d > 0.002) { const nnx = dx / d, nnz = dz / d, vn = this.vx * nnx + this.vz * nnz; if (vn < 0) { wallHit = Math.max(wallHit, -vn); this.vx -= nnx * vn * 1.35; this.vz -= nnz * vn * 1.35; this.w += (Math.random() - 0.5) * 0.6 } }
+    }
+    // 屋根（三角の柱）: 横や下から屋根の中へ入らない。軒の下に背の高い車体が入らない。乗れる高さ（0.6m）なら屋根に上がる
+    if (g.world.roofs) for (const c of cs) {
+      const cc = { x: c.x, z: c.z, y: this.y, h: this.T.h, r: this.T.r, vx: this.vx, vz: this.vz }
+      if (roofPush(g.world, cc, 0.6)) { const dx = cc.x - c.x, dz = cc.z - c.z, d = Math.hypot(dx, dz); c.x = cc.x; c.z = cc.z; if (d > 0.002) { const nnx = dx / d, nnz = dz / d, vn = this.vx * nnx + this.vz * nnz; if (vn < 0) { wallHit = Math.max(wallHit, -vn); this.vx -= nnx * vn * 1.35; this.vz -= nnz * vn * 1.35 } } }
     }
     this.x = cs.reduce((s, c) => s + c.x, 0) / cs.length; this.z = cs.reduce((s, c) => s + c.z, 0) / cs.length
     const cl = cs[cs.length - 1], ny = Math.atan2(cs[0].x - cl.x, cs[0].z - cl.z); this.yaw += Math.atan2(Math.sin(ny - this.yaw), Math.cos(ny - this.yaw)) * 0.5

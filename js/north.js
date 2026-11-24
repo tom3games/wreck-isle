@@ -1,8 +1,9 @@
 // 北の海側: 西の L 字の防波堤（赤灯台）、東の防波堤（白灯台）、フェリー乗り場と乗れるフェリー、浮き桟橋、魚市場
 // 防波堤は細い。内側の縁は人だけ止める見えない柵（爆風で浮けば海へ落ちる）
 import * as THREE from 'three'
-import { mat } from './level.js'
-import { fishingBoat } from './props.js'
+import { L as tr } from './i18n.js?v=mwu9lb26'
+import { mat } from './level.js?v=mwu9lb26'
+import { fishingBoat } from './props.js?v=mwu9lb26'
 
 function col(world, x0, y0, z0, x1, y1, z1, kind = 'solid') { return world.add({ min: [Math.min(x0, x1), y0, Math.min(z0, z1)], max: [Math.max(x0, x1), y1, Math.max(z0, z1)], kind }) }
 
@@ -117,7 +118,7 @@ function terminal(level, scene, world, x, z) {
   level.wallZ(z, z + d, x + w, 0, h, 0.15, 'tinBlue', [{ a: z + 2.5, b: z + 4.5, y0: 0, y1: 2.2 }])
   B(x - 0.5, h, z - 0.5, x + w + 0.5, h + 0.18, z + d + 0.5, 'contB')
   for (let i = 0; i < 2; i++) B(x + 1, 0, z + 2 + i * 2.2, x + 4.5, 0.45, z + 2.5 + i * 2.2, 'wood') // 待合のベンチ
-  level.sign(x + w / 2, h + 0.6, z - 0.02, Math.PI, 'フェリーのりば', 4.4, 0.7)
+  level.sign(x + w / 2, h + 0.6, z - 0.02, Math.PI, tr('フェリーのりば', 'FERRY TERMINAL'), 4.4, 0.7)
   level.dress.push({ x, z, w, d, top: h, wins: { N: [{ a: x + 0.6, b: x + 3.4, y0: 0.8 }], W: [{ a: z + 1.5, b: z + 5.5, y0: 0.8 }] }, doors: { N: [{ a: x + 4.2, b: x + 5.8 }], S: [{ a: x + 2.5, b: x + 4 }], E: [{ a: z + 2.5, b: z + 4.5 }] }, lv: 2, off: 0.105, rust: true })
   // 窓のガラス（割れる）
   level.windowX({ a: x + 0.6, b: x + 3.4, y0: 0.8, y1: 2.4 }, z)
@@ -170,7 +171,7 @@ function ferry(level, scene, world, x0, zN, zS) {
   stair(x0 + 0.5, x0 + 2.0, zN + 6, 1, 3.45, 6.45)
   // 船名
   const c = document.createElement('canvas'); c.width = 1024; c.height = 128; const g2 = c.getContext('2d')
-  g2.fillStyle = '#eeeeea'; g2.fillRect(0, 0, 1024, 128); g2.fillStyle = '#1f4f8f'; g2.font = '900 84px "Zen Kaku Gothic New", sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText('フェリー にしうら', 512, 66)
+  g2.fillStyle = '#eeeeea'; g2.fillRect(0, 0, 1024, 128); g2.fillStyle = '#1f4f8f'; g2.font = '900 84px "Zen Kaku Gothic New", sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(tr('フェリー にしうら', 'FERRY NISHIURA'), 512, 66, 1000)
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace
   for (const [xx, ry] of [[x0 - 0.02, -Math.PI / 2], [x1 + 0.02, Math.PI / 2]]) { const nm = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.1), new THREE.MeshStandardMaterial({ map: t, roughness: 0.5 })); nm.position.set(xx, 1.6, zN + 18); nm.rotation.y = ry; scene.add(nm) }
 }
@@ -184,5 +185,5 @@ function market(level, scene, world, x, z) {
   for (let i = 0; i < 3; i++) B(x + 1.5 + i * 4.2, 0, z + 2.5, x + 4.5 + i * 4.2, 0.8, z + 5.5, 'kerb')
   for (let i = 0; i < 6; i++) B(x + 1.7 + i * 2.1, 0.8, z + 3, x + 2.6 + i * 2.1, 1.08, z + 3.6, 'styro', { nocol: true })
   level.styroStack(x + 1, z + 7, 4); level.styroStack(x + w - 1, z + 7, 3)
-  level.sign(x + w / 2, 3.7, z - 0.25, Math.PI, '西浦漁協　魚市場', 6, 0.7)
+  level.sign(x + w / 2, 3.7, z - 0.25, Math.PI, tr('西浦漁協　魚市場', 'NISHIURA FISH MARKET'), 6, 0.7)
 }

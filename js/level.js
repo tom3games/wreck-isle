@@ -1,10 +1,11 @@
 // 漁港の一角（約60m四方）。見た目と当たりを同じデータから作る。
 // 座標: x が東、z が南（陸）、-z が北（海）。地面の上面 y=0、海面 y=-1.6。
 import * as THREE from 'three'
+import { L as tr } from './i18n.js?v=mwu9lb26'
 import { mergeGeometries } from '../vendor/jsm/utils/BufferGeometryUtils.js'
-import { buildAreas } from './area.js'
-import { buildNorth } from './north.js'
-import { dressNorth, stdInfo } from './dress.js'
+import { buildAreas } from './area.js?v=mwu9lb26'
+import { buildNorth } from './north.js?v=mwu9lb26'
+import { dressNorth, stdInfo } from './dress.js?v=mwu9lb26'
 
 const TEX = './assets/tex/'
 const loader = new THREE.TextureLoader()
@@ -256,8 +257,8 @@ export class Level {
     // 柱
     for (const x of [-17]) for (const z of [-13.6, -7, -2.4]) B(x - 0.15, 0, z - 0.15, x + 0.15, 3.8, z + 0.15, 'rustMetal')
     // 倉庫の看板（南と北の壁）
-    this.sign(-17, 6.0, W.z1 + 0.14, 0, '西浦漁業協同組合　第二倉庫', 9, 1.1)
-    this.sign(-17, 7.3, W.z0 - 0.14, Math.PI, '西浦漁協', 4.6, 0.9)
+    this.sign(-17, 6.0, W.z1 + 0.14, 0, tr('西浦漁業協同組合　第二倉庫', 'NISHIURA FISHERIES CO-OP  WAREHOUSE 2'), 9, 1.1)
+    this.sign(-17, 7.3, W.z0 - 0.14, Math.PI, tr('西浦漁協', 'NISHIURA CO-OP'), 4.6, 0.9)
     // シャッター（半分上がった板。上の方は当たりあり）
     B(-21, 3.0, W.z0 - 0.05, -15.5, 4.3, W.z0 + 0.05, 'shutter')
     // 中の物: 発泡スチロールの箱・木箱・網
@@ -473,7 +474,7 @@ export class Level {
     const g = c.getContext('2d')
     g.fillStyle = '#efe9dc'; g.fillRect(0, 0, c.width, c.height)
     g.fillStyle = '#1d3b68'; g.font = `700 ${Math.round(c.height * 0.62)}px "Zen Kaku Gothic New", "Hiragino Sans", sans-serif`
-    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, c.width / 2, c.height * 0.54)
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, c.width / 2, c.height * 0.54, c.width * 0.94)
     // 雨だれと色あせ
     for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(90,80,60,${Math.random() * 0.06})`; g.fillRect(Math.random() * c.width, 0, 2 + Math.random() * 6, c.height * Math.random()) }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8

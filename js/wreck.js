@@ -1,24 +1,26 @@
 // WRECK ISLE: 軽トラでぶつかり合って壊し合う。爆発したら負け、最後の1台が勝ち（FUSE ISLE の島と爆発を流用）
 import * as THREE from 'three'
-import { World, raycast, roofAt } from './collide.js'
-import { Level } from './level.js'
-import { buildProps } from './props.js'
-import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js'
-import { FX } from './fx.js'
-import { buildRails } from './rails.js'
-import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js'
-import { preloadVehicles, VT } from './vehicles.js'
-import { Person, peopleMethods, FOOT } from './people.js'
-import { loadChars, setCharView } from './chars.js'
-import { dropMethods } from './wdrop.js'
-import { raidMethods } from './raid.js'
-import { DROP, pickPath, loadPlane } from './plane.js'
-import { Minimap } from './minimap.js'
+import { L as tr, EN, NAME, applyPage } from './i18n.js?v=mwu9lb26'
+import { World, raycast, roofAt } from './collide.js?v=mwu9lb26'
+import { Level } from './level.js?v=mwu9lb26'
+import { buildProps } from './props.js?v=mwu9lb26'
+import { makeRenderer, makeSky, makeSun, makeSea, makePost } from './render.js?v=mwu9lb26'
+import { FX } from './fx.js?v=mwu9lb26'
+import { buildRails } from './rails.js?v=mwu9lb26'
+import { Car, Debris, stageOf, CAR, PAINT, SPARE } from './car.js?v=mwu9lb26'
+import { preloadVehicles, VT } from './vehicles.js?v=mwu9lb26'
+import { Person, peopleMethods, FOOT } from './people.js?v=mwu9lb26'
+import { loadChars, setCharView } from './chars.js?v=mwu9lb26'
+import { dropMethods } from './wdrop.js?v=mwu9lb26'
+import { raidMethods } from './raid.js?v=mwu9lb26'
+import { DROP, pickPath, loadPlane, makeChute } from './plane.js?v=mwu9lb26'
+import { bombMesh } from './bombs.js?v=mwu9lb26'
+import { Minimap } from './minimap.js?v=mwu9lb26'
 import { ShaderPass } from '../vendor/jsm/postprocessing/ShaderPass.js'
-import { DriveGrid } from './drive.js'
-import { Driver } from './cpu.js'
-import { Nav } from './bots.js'
-import { itemMethods, ITEMS, ICON, ROLL_T, KINDS } from './items.js'
+import { DriveGrid } from './drive.js?v=mwu9lb26'
+import { Driver } from './cpu.js?v=mwu9lb26'
+import { Nav } from './bots.js?v=mwu9lb26'
+import { itemMethods, ITEMS, ITEMS_EN, ICON, ROLL_T, KINDS } from './items.js?v=mwu9lb26'
 
 const Q = Object.fromEntries(new URLSearchParams(location.search))
 const $ = s => document.querySelector(s)
@@ -134,9 +136,12 @@ class Game {
     this.bindInput()
     window.addEventListener('resize', () => this.resize()); this.resize()
     this.defSounds()
+    if (Snd && Snd.prefetch) Snd.prefetch(['snd/water.mp3', 'snd/wind.mp3', 'snd/engine.mp3']) // 音のファイルは読み込み画面のうちに取る
     this.makeZoneMesh()
     this.newMatch()
     tm('this.newMatch()')
+    this.prewarm()
+    tm('prewarm')
     this.mode = Q.play ? 'play' : 'title'
     if (Q.play) this.begin()
     this.setLoad(1)
@@ -192,30 +197,34 @@ class Game {
     if (!A) A = this.arenas[0]
     const R0 = 360, F = DROP.T
     // 11人なので FUSE ISLE（50人・10分）より早く縮める: 降下 30秒 → 35秒後に縮み始め → 約4分で最後の円 → 少し置いて円が消える
-    this.zone = { x: A[0], z: A[1], r: R0, r0: R0, r1: 12, t0: F + 35, t1: F + 250, t2: F + 275, t3: F + 305 }
+    // 最初は島ぜんぶ（本人「最初からマップが制限されてるのやめて」2026-11-24）: 円は島の真ん中に半径 500m（島がすっぽり入る）。
+    // 降下のあと 50秒は自由に走れて、そこから最後の円（A の近く）へ向けて、真ん中を動かしながら縮む
+    const IC = [0, 256]
+    this.zone = { x: IC[0], z: IC[1], x0: IC[0], z0: IC[1], x1: A[0], z1: A[1], r: 500, r0: 500, r1: 12, t0: F + 50, t1: F + 265, t2: F + 290, t3: F + 320 }
     this.dropOn = true; this.path = pickPath(this.rng)
     // 置き場の候補: 円の中の走れる所（まわりも広い所）
     const taken = []
     const spot = (rMin, rMax, gap, reach) => {
       for (let k = 0; k < 6000; k++) {
-        const a = this.rng() * 6.283, rr = rMin + Math.sqrt(this.rng()) * (rMax - rMin), x = A[0] + Math.cos(a) * rr, z = A[1] + Math.sin(a) * rr
+        const a = this.rng() * 6.283, rr = rMin + Math.sqrt(this.rng()) * (rMax - rMin), x = IC[0] + Math.cos(a) * rr, z = IC[1] + Math.sin(a) * rr // 置き場は島ぜんぶ
         if (!G.free(x, z) || [[2, 0], [-2, 0], [0, 2], [0, -2], [3, 3], [-3, -3]].some(([dx, dz]) => !G.free(x + dx, z + dz))) continue
         if (taken.some(p => Math.hypot(p[0] - x, p[1] - z) < gap)) continue
         if (reach && G.reach(x, z, 30) < 0.4) continue
         taken.push([x, z]); return [x, z]
       }
-      const p = [A[0] + taken.length * 3, A[1]]; taken.push(p); return p
+      const p = [A[0] + (taken.length % 20) * 4, A[1] + Math.floor(taken.length / 20) * 4]; taken.push(p); return p
     }
     // 車は島に置いておく（全員が歩きで着地するので、人数より少し多め）。壊れ具合とガソリンはばらばら
-    const NC = N_CARS + (Q.spare != null ? +Q.spare : 5)
+    // 車は島ぜんぶに 50台（本人「車が少な過ぎる」2026-11-24）・種類はばらけさせる
+    const NC = Q.spare != null ? N_CARS + +Q.spare : 50
     for (let i = 0; i < NC; i++) {
-      const [x, z] = spot(0, R0 * 0.8, 34, true), c = new Car(this, i, x, z, this.rng() * 6.28, i < PAINT.length ? PAINT[i] : SPARE[i % SPARE.length], TYPE_MIX[i % TYPE_MIX.length])
+      const [x, z] = spot(0, 470, 22, true), c = new Car(this, i, x, z, this.rng() * 6.28, i < PAINT.length ? PAINT[i] : SPARE[i % SPARE.length], TYPE_MIX[i % TYPE_MIX.length])
       if (i === 0) c.paintName = '白'
       c.hp = 60 + Math.round(this.rng() * 40); c.fuel = c.T.tank * (0.35 + this.rng() * 0.55); c.wear(); this.cars.push(c)
     }
     // 自転車をところどころに（2026-11-24 本人）
-    for (let i = 0; i < (Q.bikes != null ? +Q.bikes : 12); i++) { const [x, z] = spot(0, R0 * 0.82, 26, false), c = new Car(this, 300 + i, x, z, this.rng() * 6.28, [['自転車', [0x2b5d8a, 0xb23a2e, 0x2f6b3c, 0xd9a92b, 0x1f1f22][i % 5]][0], [0x2b5d8a, 0xb23a2e, 0x2f6b3c, 0xd9a92b, 0x1f1f22][i % 5]], 'bike'); this.cars.push(c) }
-    const NAMES = PAINT.map(p => p[0])
+    for (let i = 0; i < (Q.bikes != null ? +Q.bikes : 26); i++) { const [x, z] = spot(0, 470, 18, false), c = new Car(this, 300 + i, x, z, this.rng() * 6.28, [['自転車', [0x2b5d8a, 0xb23a2e, 0x2f6b3c, 0xd9a92b, 0x1f1f22][i % 5]][0], [0x2b5d8a, 0xb23a2e, 0x2f6b3c, 0xd9a92b, 0x1f1f22][i % 5]], 'bike'); this.cars.push(c) }
+    const NAMES = PAINT.map(p => NAME(p[0])) // 英語の時は色の名前を英語に
     for (let i = 0; i < N_CARS; i++) {
       const p = new Person(this, i, NAMES[i], i === 0); p.nid = i
       if (i > 0 || Q.auto) p.ai = new Driver(p, this, this.rng)
@@ -223,9 +232,9 @@ class Game {
     }
     this.me = this.ps[0]
     // 箱 80 個・ガソリン缶 36 個・給油所 5 か所（島ぜんぶに散らす）
-    const bs = []; for (let k = 0; k < 80; k++) bs.push(spot(0, R0 * 0.85, 14, false))
+    const bs = []; for (let k = 0; k < 120; k++) bs.push(spot(0, 470, 14, false))
     this.placeBoxes(bs)
-    this.placeFuel(Array.from({ length: 36 }, () => spot(0, R0 * 0.85, 14, false)), Array.from({ length: 5 }, () => spot(0, R0 * 0.7, 60, true)))
+    this.placeFuel(Array.from({ length: 50 }, () => spot(0, 470, 14, false)), Array.from({ length: 7 }, () => spot(0, 430, 70, true)))
     this.planDrops()
     this.resetDropVisual()
     this.resetRaid()
@@ -367,7 +376,7 @@ class Game {
     c.wear()
     if (c === this.player && c.driver) this.hurtK = Math.min(1, (this.hurtK || 0) + raw / 80)
     if (c.hp <= 0) { this.explodeCar(c, by, how); return }
-    if (c.stage > st0 && c === this.player) this.toast(['', '煙が出た', '黒い煙', '火が出た'][c.stage])
+    if (c.stage > st0 && c === this.player) this.toast(EN ? ['', 'Smoking', 'Black smoke', 'On fire'][c.stage] : ['', '煙が出た', '黒い煙', '火が出た'][c.stage])
   }
   explodeCar(c, by, how) {
     if (c.T.bike) { // 自転車は燃えずにばらばらに（乗る人は放り出される）
@@ -433,6 +442,55 @@ class Game {
     }
     this.skid.count = Math.min(900, this.skidN); this.skid.instanceMatrix.needsUpdate = true
   }
+  // 先読み（本人「最初にできるだけデータを読み込んでおいて、プレイをカクカクしないように」2026-11-24）
+  // 読み込み画面の裏で: 全部の絵を GPU に送り、遊び始めてから初めて出る物（傘・爆発・火・煙・地雷・鉄球・槍・磁石・ジェットの炎・爆撃の輪・人）を
+  // カメラの前に一度並べて描き、シェーダーを全部作っておく。描いたら片づける
+  prewarm() {
+    const r = this.renderer, cam = this.camera, sc = this.scene
+    const texs = new Set(); sc.traverse(o => { const ms = o.material ? [].concat(o.material) : []; for (const m of ms) for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap']) if (m[k] && m[k].isTexture) texs.add(m[k]) })
+    for (const t of texs) { try { r.initTexture(t) } catch (e) {} }
+    const c = this.cars.find(c => c.T && !c.T.bike) || this.cars[0], P = new THREE.Vector3(c.x, c.y + 1, c.z)
+    const tmp = []
+    const put = (o, dx, dy, dz) => { o.position.set(P.x + dx, P.y + dy, P.z + dz); sc.add(o); tmp.push(o) }
+    const ch = makeChute(1); put(ch, 3, 2, 0)
+    const mine = bombMesh('mine'); mine.scale.setScalar(3.2); put(mine, -3, -0.9, 2)
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.75, 24, 16), new THREE.MeshStandardMaterial({ color: 0x2c2e30, roughness: 0.35, metalness: 0.9 })); put(ball, -2, 0, -3)
+    for (const k of ['spear', 'magnet', 'jet']) c.v3[k].visible = true
+    const hid = []; for (const p of this.ps) if (!p.char.root.visible) { p.char.root.visible = true; p.char.root.position.set(P.x + 2, P.y - 1, P.z + 2); hid.push(p) }
+    if (this.planeMesh) { this.planeMesh.visible = true; this.planeMesh.position.set(P.x, P.y + 8, P.z + 14) }
+    this.raidMesh.visible = this.raidRing.visible = true; this.raidMesh.position.set(P.x, P.y, P.z); this.raidRing.position.set(P.x, P.y, P.z)
+    this.fx.explosion(P.clone(), 1.5, { groundY: c.y }); this.fx.fire(P.clone(), 0.5); this.fx.groundFire(P.clone(), 2, 0.5); this.fx.splash(P.clone())
+    this.debris.chip(P.clone(), new THREE.Vector3(0, 2, 0), 0xffffff, 3)
+    const cp = cam.position.clone(), cq = cam.quaternion.clone()
+    cam.position.set(P.x - 12, P.y + 5, P.z - 12); cam.lookAt(P)
+    try { r.compile(sc, cam) } catch (e) {}
+    this.fx.update(0.016); this.post.comp.render(0.016); this.post.comp.render(0.016)
+    // 片づけ
+    for (const o of tmp) sc.remove(o)
+    for (const k of ['spear', 'magnet', 'jet']) c.v3[k].visible = false
+    for (const p of hid) p.char.root.visible = false
+    this.raidMesh.visible = this.raidRing.visible = false
+    for (const pt of this.fx.parts) { pt.s.visible = false; this.fx.pool.push(pt.s) } this.fx.parts.length = 0; this.fx.debs.length = 0; this.fx.fires && (this.fx.fires.length = 0)
+    if (this.fx.gfires) { for (const f of this.fx.gfires) sc.remove(f.glow); this.fx.gfires.length = 0 }
+    for (const rg of this.fx.rings) sc.remove(rg.m); this.fx.rings.length = 0
+    for (const d of this.fx.decals) sc.remove(d); this.fx.decals.length = 0
+    this.debris.cs.length = 0
+    cam.position.copy(cp); cam.quaternion.copy(cq)
+  }
+  // 遠い車は描かない・影を落とさない（車を 50台に増やしても重くならないように 2026-11-24）。
+  // 240m 先の車は霧の中で数ピクセル（前は 200m で切っていた所を lodCars にまとめた）。影は太陽の影の届く範囲（自分のまわり）の車だけ
+  lodCars() {
+    const cp = this.camera.position, far = PHONE ? 200 : 240
+    for (const c of this.cars) {
+      if (!c.pivot) continue
+      const d = Math.hypot(c.x - cp.x, c.z - cp.z), vis = d < far
+      if (c.pivot.visible !== vis && !c.hidden) { c.pivot.visible = vis; c.pivot.matrixWorldAutoUpdate = vis; if (vis) c._mDirty = 2 }
+      const sh = d < 90
+      if (c._sh !== sh) { c._sh = sh; c.pivot.traverse(o => { if (o.isMesh) { if (o.userData.cs0 == null) o.userData.cs0 = o.castShadow; o.castShadow = sh && o.userData.cs0 } }) }
+    }
+  }
+  // 道さがしの順番（1コマに1回まで）
+  pathTake() { if (this._pathFrame === this._stepN) return false; this._pathFrame = this._stepN; return true }
   sinkCar(c) {
     c.alive = false; c.hp = 0; this.fx.splash(new THREE.Vector3(c.x, -1.2, c.z)); this.sound('thud', c, 0.8)
     if (c.driver) this.killPerson(c.driver, c.lastHitBy && this.t - c.lastHitT < 8 ? c.lastHitBy : null, 'sea')
@@ -471,7 +529,9 @@ class Game {
   }
   updateZone(dt) {
     const z = this.zone, t = this.t
-    if (t < z.t1) z.r = z.r0 + (z.r1 - z.r0) * THREE.MathUtils.clamp((t - z.t0) / (z.t1 - z.t0), 0, 1)
+    const k = THREE.MathUtils.clamp((t - z.t0) / (z.t1 - z.t0), 0, 1)
+    z.x = z.x0 + (z.x1 - z.x0) * k; z.z = z.z0 + (z.z1 - z.z0) * k // 真ん中も最後の円へ寄っていく（最後の円がいつも今の円の中）
+    if (t < z.t1) z.r = z.r0 + (z.r1 - z.r0) * k
     else if (t < z.t2) z.r = z.r1
     else z.r = z.r1 * Math.max(0, 1 - (t - z.t2) / (z.t3 - z.t2)) // 最後は円が消えて、全員が少しずつ壊れる
     this.zoneMesh.scale.set(Math.max(0.5, z.r), 1, Math.max(0.5, z.r)); this.zoneMesh.position.x = z.x; this.zoneMesh.position.z = z.z
@@ -497,7 +557,7 @@ class Game {
       const c = new Car(this, 200 + this.cars.length, x, zz, this.rng() * 6.28, SPARE[this.cars.length % SPARE.length], TYPE_MIX[Math.floor(this.rng() * TYPE_MIX.length)])
       c.hp = 55 + Math.round(this.rng() * 45); c.fuel = 30 + Math.round(this.rng() * 50); c.wear()
       c.y += 14; c.vy = -2; c.air = true; this.cars.push(c); this.ev.supply = (this.ev.supply || 0) + 1
-      if (this.me.alive && !this.me.car && Math.hypot(x - this.me.x, zz - this.me.z) < 90) this.toast('空き車が落ちてきた')
+      if (this.me.alive && !this.me.car && Math.hypot(x - this.me.x, zz - this.me.z) < 90) this.toast(tr('空き車が落ちてきた', 'A spare car dropped in'))
       return
     }
   }
@@ -514,7 +574,7 @@ class Game {
       k.mesh.userData.can.rotation.y += dt * 1.2
       for (const c of this.cars) if (c.alive && c.driver && Math.hypot(c.x - k.x, c.z - k.z) < 2.3) {
         k.on = false; k.t = 14; k.mesh.visible = false; c.fuel = Math.min(c.T.tank, c.fuel + c.T.tank * 0.45); this.ev.cans++
-        this.sound('latch', k, 0.7); if (c === this.player) this.toast('ガソリン +45'); break
+        this.sound('latch', k, 0.7); if (c === this.player) this.toast(tr('ガソリン +45', 'Fuel +45')); break
       }
     }
     for (const q of this.pumps) for (const c of this.cars) {
@@ -527,6 +587,7 @@ class Game {
   // ---------- 1コマ ----------
   step(dt) {
     if (this.mode === 'play') this.t += dt
+    this._stepN = (this._stepN || 0) + 1
     if (this.mode === 'play') { const k = Math.ceil(this.countT); this.countT -= dt; if (Math.ceil(this.countT) !== k && this.countT > 0) this.sound('tick', this.me, 0.6) }
     const go = this.mode === 'play' && this.countT <= 0
     setCharView(this.camera, this.world)
@@ -625,14 +686,19 @@ class Game {
     const h = raycast(this.world, [head.x, head.y, head.z], [wantP.x, wantP.y, wantP.z])
     if (h) { const len = head.distanceTo(wantP) || 1; wantP.lerpVectors(head, wantP, Math.max(0.1, h.t - 0.3 / len)) } // 壁の手前 30cm まで寄せる
     // ほかの車の中にカメラが入らないように（歩いている時にバスやダンプのそばで画面が真っ暗になった）
-    for (const c of this.cars) {
-      if (c === t || Math.abs(c.x - wantP.x) > 8 || Math.abs(c.z - wantP.z) > 8) continue
-      const inside = q => { const [a, b] = c.local(q.x, q.z); return Math.abs(a) < c.T.half[0] + 0.35 && Math.abs(b) < c.T.half[1] + 0.35 && q.y < c.y + c.T.h + 0.3 && q.y > c.y - 0.3 }
-      if (!inside(wantP)) continue
-      for (let k = 0.9; k > 0.05; k -= 0.1) { const q = head.clone().lerp(wantP, k); if (!inside(q)) { wantP.copy(q); break } if (k < 0.15) wantP.y = c.y + c.T.h + 0.6 }
-    }
+    // 2026-11-24: スマホで歩いている時に車のそばで画面が一瞬黒くなった（追いかける途中のカメラが車の中を通った・車の面がカメラに近すぎて切れた）。
+    // 車の箱を 0.5m 広げて見て、目標の位置だけでなく、実際に置くカメラの位置も車の外に出す
+    const nearCars = this.cars.filter(c => c !== t && c.pivot.visible && Math.abs(c.x - head.x) < 10 && Math.abs(c.z - head.z) < 10)
+    const insideCar = q => nearCars.find(c => { const [a, b] = c.local(q.x, q.z); return Math.abs(a) < c.T.half[0] + 0.5 && Math.abs(b) < c.T.half[1] + 0.5 && q.y < c.y + c.T.h + 0.45 && q.y > c.y - 0.4 })
+    // 木の葉（円すいの形・幹の箱から大きさを出す）の中にもカメラを入れない。森を歩くと画面が葉の緑や幹の黒で一瞬埋まった（2026-11-24 スマホの点滅）
+    const tb = []; this.world.near(head.x - 6, head.z - 6, head.x + 6, head.z + 6, tb)
+    const trees = tb.filter(b => b.tag === 'tree' && !b.dead)
+    const insideTree = q => trees.some(b => { const k = (b.max[0] - b.min[0]) / 0.26, by = b.min[1] + 1, hk = (q.y - by) / k; if (hk < -0.2 || hk > 7.3) return false; const d = Math.hypot(q.x - (b.min[0] + b.max[0]) / 2, q.z - (b.min[2] + b.max[2]) / 2); return hk < 0.95 ? d < 0.35 * k : d < (1.9 * (1 - (hk - 0.95) / 6.3) + 0.25) * k })
+    const blocked = q => insideCar(q) || insideTree(q)
+    if (blocked(wantP)) { let ok = false; for (let k = 0.9; k > 0.05; k -= 0.08) { const q = head.clone().lerp(wantP, k); if (!blocked(q)) { wantP.copy(q); ok = true; break } } const ic = insideCar(wantP); if (!ok && ic) wantP.y = ic.y + ic.T.h + 0.7 }
     if (!this.camReady) { this.camPos = wantP.clone(); this.camReady = true }
     this.camPos.lerp(wantP, 1 - Math.exp(-dt * 18))
+    if (blocked(this.camPos)) this.camPos.copy(wantP) // 追いかける途中で車や木の中を通らない
     this.camera.position.copy(this.camPos)
     const look = this.camPos.clone().addScaledVector(fwd, 10)
     if (this.fx.shake > 0) { const s = this.fx.shake * 0.12; this.camera.position.add(new THREE.Vector3((Math.random() - 0.5) * s, (Math.random() - 0.5) * s, (Math.random() - 0.5) * s)) }
@@ -644,7 +710,6 @@ class Game {
     this.updateCamera(dt)
     const cp = this.camera.position, recheck = (this._cullN = (this._cullN || 0) + 1) % 6 === 0
     if (recheck) for (const o of this.cullables) o.visible = (o.position.x - cp.x) ** 2 + (o.position.z - cp.z) ** 2 < o.userData.cullDist ** 2
-    if (recheck) for (const c of this.cars) c.pivot.visible = (c.x - cp.x) ** 2 + (c.z - cp.z) ** 2 < 200 * 200
     this.sea.tick(performance.now() / 1000)
     this.syncPlane(dt); this.airAudio(); this.raidVisual(dt)
     if (this.mode === 'play' && this.minimap) this.minimap.draw()
@@ -671,6 +736,7 @@ class Game {
         while (this.acc >= DT) { this.step(DT); this.acc -= DT }
       }
     }
+    if (this.frames % 8 === 0) this.lodCars()
     this.render(el)
     this.frames++
     requestAnimationFrame(() => this.loop())
@@ -752,8 +818,8 @@ class Game {
     const P = this.me, p = P.car
     this.set('#alive', 'alive', this.ps.filter(c => c.alive).length, (el, v) => el.textContent = v)
     const z = this.zone, left = Math.ceil(z.t0 - this.t), outD = Math.ceil(Math.hypot(P.x - z.x, P.z - z.z) - z.r)
-    const zt = this.t < DROP.T ? '輸送機が島の上を飛んでいる' : this.countT > 0 ? '' : P.alive && outD > 0 ? `円の外　あと ${outD}m` : left > 0 ? `円が縮むまで ${left}` : this.t < z.t1 ? '円が縮んでいる' : this.t < z.t2 ? '' : '円が消える'
-    this.set('#zone', 'zone', zt, (el, v) => { el.textContent = v; el.classList.toggle('warn', v.startsWith('円の外') || v === '円が消える') })
+    const zt = this.t < DROP.T ? tr('輸送機が島の上を飛んでいる', 'The plane is crossing the island') : this.countT > 0 ? '' : P.alive && outD > 0 ? tr(`円の外　あと ${outD}m`, `Outside the circle  ${outD}m to safety`) : left > 0 ? tr(`円が縮むまで ${left}`, `Circle shrinks in ${left}`) : this.t < z.t1 ? tr('円が縮んでいる', 'Circle is shrinking') : this.t < z.t2 ? '' : tr('円が消える', 'Circle is closing')
+    this.set('#zone', 'zone', zt, (el, v) => { el.textContent = v; el.classList.toggle('warn', v.startsWith('円の外') || v === '円が消える' || v.startsWith('Outside') || v === 'Circle is closing') })
     const cd = this.countT > 0 ? String(Math.ceil(this.countT)) : this.countT > -0.8 ? 'GO' : ''
     this.set('#count', 'count', cd, (el, v) => { el.textContent = v; el.classList.toggle('on', !!v) })
     if (this.dropHud) this.dropHud()
@@ -766,18 +832,18 @@ class Game {
     this.set('#fuel', 'fuel', fu, (el, v) => { el.style.setProperty('--a', (v < 0 ? -60 : -60 + v * 1.2) + 'deg'); el.classList.toggle('low', v >= 0 && v < 15); el.classList.toggle('none', v < 0) })
     const kmh = p ? Math.round(Math.abs(p.speed) * 3.6) : -1
     this.set('#spd', 'spd', kmh, (el, v) => { el.classList.toggle('on', v >= 0); if (v >= 0) el.querySelector('b').textContent = v })
-    this.set('#spd', 'vt', p ? p.type : '', (el, v) => { el.querySelector('i').textContent = v ? VT[v].name : '' })
+    this.set('#spd', 'vt', p ? p.type : '', (el, v) => { el.querySelector('i').textContent = v ? (EN ? VT[v].en : VT[v].name) : '' })
     // 乗る・降りるのボタン
     const near = foot ? this.nearEmptyCar(P) : null
     const dm = !P.alive ? '' : P.air ? (P.air.mode === 'plane' ? 'jump' : P.air.mode === 'fall' ? 'chute' : '') : p ? 'out' : near ? 'in' : ''
-    this.set('#door', 'door', dm, (el, v) => { el.classList.toggle('on', !!v); el.dataset.m = v; el.querySelector('.nm').textContent = { out: '降りる', in: '乗る', jump: '飛び降りる', chute: '傘を開く' }[v] || '' })
+    this.set('#door', 'door', dm, (el, v) => { el.classList.toggle('on', !!v); el.dataset.m = v; el.querySelector('.nm').textContent = (EN ? { out: 'Get out', in: 'Get in', jump: 'Jump', chute: 'Chute' } : { out: '降りる', in: '乗る', jump: '飛び降りる', chute: '傘を開く' })[v] || '' })
     this.set('#hud', 'air', P.air ? 1 : 0, (el, v) => el.classList.toggle('air', !!v))
-    if (foot && near && this.t - (this._nearT || -9) > 4 && near !== this._nearC) { this._nearT = this.t; this._nearC = near; this.toast(PHONE ? `${near.paintName}の軽トラに乗れる` : `${near.paintName}の軽トラ　F で乗る`) }
+    if (foot && near && this.t - (this._nearT || -9) > 4 && near !== this._nearC) { this._nearT = this.t; this._nearC = near; { const nm = near.T.bike ? tr(near.T.name, near.T.en) : tr(`${near.paintName}の${near.T.name}`, `${NAME(near.paintName)} ${near.T.en}`); this.toast(EN ? (PHONE ? `${nm} — tap the door` : `${nm} — F to get in`) : PHONE ? `${nm}に乗れる` : `${nm}　F で乗る`) } }
     // アイテム
     const it = !p ? '' : p.rollT > 0 ? 'roll' : p.item || ''
     if (p && p.rollT > 0) { const i = Math.floor((ROLL_T - p.rollT) / 0.09) % KINDS.length; this.set('#use', 'icon', 'r' + i, el => { el.querySelector('.ic').innerHTML = ICON[KINDS[i]] }) }
     else this.set('#use', 'icon', it, (el, v) => { el.querySelector('.ic').innerHTML = v ? ICON[v] : '' })
-    this.set('#use', 'state', it, (el, v) => { el.classList.toggle('has', !!v && v !== 'roll'); el.classList.toggle('roll', v === 'roll'); el.querySelector('.nm').textContent = v && v !== 'roll' ? ITEMS[v] : '' })
+    this.set('#use', 'state', it, (el, v) => { el.classList.toggle('has', !!v && v !== 'roll'); el.classList.toggle('roll', v === 'roll'); el.querySelector('.nm').textContent = v && v !== 'roll' ? (EN ? ITEMS_EN[v] : ITEMS[v]) : '' })
     const act = p && (p.spearT > 0 ? 'spear' : p.jetT > 0 ? 'jet' : p.magT > 0 ? 'magnet' : '')
     this.set('#use', 'act', act || '', (el, v) => el.classList.toggle('act', !!v))
     const fd = this.feed.filter(e => this.t - e.t < 6).slice(0, 3).map(e => `<li>${e.txt}</li>`).join('')
@@ -788,10 +854,10 @@ class Game {
     this.resultShown = true
     const P = this.me, r = $('#result')
     const rank = P.alive ? 1 : P.place
-    const how = { boom: '車ごと爆発', ram: 'はねられた', zone: '円の外で力尽きた', sea: '海に落ちた', jump: '飛び降りて転んだ', burn: '車ごと燃えた' }
-    r.querySelector('.rank').textContent = this.winner === P ? '最後のひとり' : `${rank}位`
-    r.querySelector('.sub').textContent = this.winner === P ? `${P.kills}人を倒した` : P.killedBy ? `${P.killedBy.name}に${P.how === 'ram' ? 'はねられた' : '車ごと爆破された'}` : (how[P.how] || '')
-    r.querySelector('.st').textContent = this.winner === P ? '' : this.winner ? `勝ったのは ${this.winner.name}` : `倒した ${P.kills}人`
+    const how = EN ? { boom: 'Blew up with your car', ram: 'Run over', zone: 'Gave out outside the circle', sea: 'Fell into the sea', jump: 'Bailed out and crashed', burn: 'Burned with your car', raid: 'Caught in the air raid' } : { boom: '車ごと爆発', ram: 'はねられた', zone: '円の外で力尽きた', sea: '海に落ちた', jump: '飛び降りて転んだ', burn: '車ごと燃えた' }
+    r.querySelector('.rank').textContent = this.winner === P ? tr('最後のひとり', 'LAST ONE STANDING') : tr(`${rank}位`, `#${rank}`)
+    r.querySelector('.sub').textContent = this.winner === P ? tr(`${P.kills}人を倒した`, `${P.kills} ${P.kills === 1 ? 'kill' : 'kills'}`) : P.killedBy ? tr(`${P.killedBy.name}に${P.how === 'ram' ? 'はねられた' : '車ごと爆破された'}`, `${P.how === 'ram' ? 'Run over' : 'Blown up'} by ${P.killedBy.name}`) : (how[P.how] || '')
+    r.querySelector('.st').textContent = this.winner === P ? '' : this.winner ? tr(`勝ったのは ${this.winner.name}`, `Winner: ${this.winner.name}`) : tr(`倒した ${P.kills}人`, `Kills: ${P.kills}`)
     r.classList.add('show')
   }
 }
@@ -799,7 +865,8 @@ Object.assign(Game.prototype, itemMethods, peopleMethods, dropMethods, raidMetho
 
 const game = new Game()
 window.FI = game
-game.init().catch(e => { console.error(e); const el = document.getElementById('err'); if (el) { el.textContent = '読み込みに失敗しました: ' + e.message; el.style.display = 'block' } })
+applyPage() // 英語の時は画面の文字を入れ替える（?lang=en・ブラウザの言語）
+game.init().catch(e => { console.error(e); const el = document.getElementById('err'); if (el) { el.textContent = tr('読み込みに失敗しました: ', 'Failed to load: ') + e.message; el.style.display = 'block' } })
 // 検証用
 game.dbg = {
   // 検証用: あなたも CPU と同じ運転にする（人として最後まで通す検査で、指はボタンだけ押す）
@@ -878,6 +945,76 @@ game.dbg = {
     }
     g._quiet = false
     return out
+  },
+  // 屋根・壁の当たりの検査（2026-11-24）: 家ごとに 車・バス・自転車・人で 落とす／ぶつける／跳んで突っ込む／屋根から降りる／壁沿いに走る を試し、
+  // めり込み（屋根の中・壁の中）・浮き・沈みのコマを数える。who: kei|bus|bike|person
+  roofAudit(who, nRoofs = 16, seed = 5) {
+    const g = game, W = g.world, rnd = mulberry(seed), res = { who, n: 0, bad: 0, byCase: {}, samples: [] }
+    const roofs = (W.roofs || []).slice(); for (let i = roofs.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [roofs[i], roofs[j]] = [roofs[j], roofs[i]] }
+    const T = who === 'person' ? null : (g.cars.find(c => c.type === who) || g.cars[0])
+    for (const c of g.cars) if (c !== T) { c.alive = false; c.driver = null; c.x = c.z = 1e5; c.pivot.visible = false }
+    g.mode = 'play'; g.countT = -5; g._quiet = true; g.raid = null; g.zone.r = g.zone.r0 = 1e4; g.zone.t0 = 1e9
+    for (const p of g.ps) if (p.ai) p.ai.off = true
+    for (const p of g.ps) if (p !== g.me) { p.alive = false; p.body.x = p.body.z = 2e5 }
+    const me = g.me; me.air = null; me.alive = true; me.hp = 1e6
+    const sup = (x, z, y) => { let h = this.surface(x, z); for (const b of W.near(x - 0.1, z - 0.1, x + 0.1, z + 0.1, [])) if (!b.dead && b.kind === 'solid' && x > b.min[0] && x < b.max[0] && z > b.min[2] && z < b.max[2] && b.max[1] <= y + 0.65 && b.max[1] > h) h = b.max[1]; const rf = roofAt(W, x, z); if (rf > h && rf <= y + 0.65) h = rf; return h }
+    const L = (r, along, q) => r.ridge === 'x' ? [along, q] : [q, along] // 棟の向き・横の向き → x,z
+    for (const r of roofs.slice(0, nRoofs)) {
+      const a0 = r.ridge === 'x' ? r.x0 : r.z0, a1 = r.ridge === 'x' ? r.x1 : r.z1, am = (a0 + a1) / 2
+      const cases = {
+        dropC: { at: L(r, am, r.c), y: 'roof+3' },
+        dropE: { at: L(r, am, r.c + r.half - 0.4), y: 'roof+3' },
+        dropG: { at: L(r, a0 + 0.5, r.c), y: 'roof+3' },
+        ramW: { at: L(r, am, r.c + r.half + 7), dir: L(r, 0, -1), sp: 13 },
+        ramG: { at: L(r, a1 + 7, r.c + 0.5), dir: L(r, -1, 0), sp: 13 },
+        jumpW: { at: L(r, am, r.c + r.half + 6), dir: L(r, 0, -1), sp: 11, vy: 8.5 },
+        jumpG: { at: L(r, a1 + 6, r.c), dir: L(r, -1, 0), sp: 11, vy: 8.5 },
+        offR: { at: L(r, am, r.c), y: 'roof', dir: L(r, 1, 0), sp: 6 },
+        offE: { at: L(r, am, r.c + 0.5), y: 'roof', dir: L(r, 0, 1), sp: 6 },
+        along: { at: L(r, a0 - 6, r.c + r.half + 0.5), dir: L(r, 1, 0), sp: 10 },
+      }
+      for (const [name, C] of Object.entries(cases)) {
+        let [x, z] = C.at; const rf = roofAt(W, x, z), gy = this.surface(x, z)
+        const y = C.y === 'roof+3' ? rf + 3 : C.y === 'roof' ? rf : gy
+        if (!C.y && gy > r.base - 0.5) continue // 家が高い所にあって地面から試せない
+        const dir = C.dir ? C.dir : [0, 1], yaw = Math.atan2(dir[0], dir[1]), sp = C.sp || 0
+        const body = () => T ? T : me.body
+        if (T) {
+          T.alive = true; T.hp = 1e6; T.fuel = 100; T.flipX = T.flipZ = T.fwX = T.fwZ = 0; T.jetT = T.spearT = T.magT = 0; T.sleepT = 0
+          T.x = x; T.z = z; T.yaw = yaw; T.y = y; T.vx = Math.sin(yaw) * sp; T.vz = Math.cos(yaw) * sp; T.vy = C.vy || 0; T.w = 0; T.air = !!C.vy || C.y === 'roof+3'
+          if (!T.air) T.y = T.settle()
+          T.driver = me; me.car = T; me.ai = { update() { if (me.car) me.car.input = { throttle: C.sp ? 1 : 0, steer: 0 } } }
+        } else {
+          if (me.car) { me.car.driver = null; me.car = null }
+          me.char.root.visible = true
+          const B = me.body; B.x = x; B.z = z; B.y = y; B.vx = Math.sin(yaw) * Math.min(sp, 6); B.vz = Math.cos(yaw) * Math.min(sp, 6); B.vy = C.vy ? 6 : 0; B.onGround = false
+          me.ai = { update() { me.input = { mx: C.sp ? dir[0] : 0, mz: C.sp ? dir[1] : 0, run: true, jump: name.startsWith('jump') } } }
+        }
+        let bad = 0, run = 0, why = null
+        for (let k = 0; k < 60 * 4; k++) {
+          g.step(DT)
+          const b = body(), bx = b.x, bz = b.z, by = b.y, air = T ? T.air : !b.onGround
+          if (k < 6) continue
+          const inFoot = bx > r.x0 + 0.7 && bx < r.x1 - 0.7 && bz > r.z0 + 0.7 && bz < r.z1 - 0.7
+          const inRoofXZ = bx > r.x0 && bx < r.x1 && bz > r.z0 && bz < r.z1
+          const s0 = roofAt(W, bx, bz)
+          let w = null
+          if (inRoofXZ && by > r.base + 0.05 && by < s0 - 0.35) w = '屋根の中'
+          else if (T && inFoot && by < r.base - 0.3 && by > 0.2) w = '家の中'
+          else if (!air) {
+            const pts = T ? [[T.T.half[0] - 0.15, T.T.half[1]], [T.T.half[0] - 0.15, -T.T.half[1]], [-T.T.half[0] + 0.15, T.T.half[1]], [-T.T.half[0] + 0.15, -T.T.half[1]]].map(([u, v]) => T.world(u, v)) : [[bx, bz]]
+            const ss = pts.map(([px, pz]) => sup(px, pz, by)), mx = Math.max(...ss), mn = Math.min(...ss)
+            if (by - Math.max(mx, sup(bx, bz, by) - 0.2) > 0.35) w = '浮き' // 棟に腹を乗せた車は真ん中で支える
+            else if (mn - by > 0.3 && sup(bx, bz, by) - by > 0.3) w = '沈み'
+          }
+          if (w) { run++; if (run > 3) { bad++; why = why || [w, +bx.toFixed(1), +bz.toFixed(1), +by.toFixed(2), +s0.toFixed(2), k] } } else run = 0
+        }
+        res.n++; const bc = res.byCase[name] || (res.byCase[name] = { n: 0, bad: 0 }); bc.n++
+        if (bad) { res.bad++; bc.bad++; if (res.samples.length < 12) res.samples.push([name, Math.round(x), Math.round(z), r.ridge, ...why]) }
+      }
+    }
+    g._quiet = false
+    return res
   },
   // 画面を描かずに秒数ぶん進める。auto=1 ならあなたの車も CPU が運転する
   run(sec, o = {}) {

@@ -1,8 +1,9 @@
 // 左上の小さな地図（島の古い案内図のような紙の色）。島・川・道・建物は起動時に1回だけ画像に描き、毎コマは自分の向き（矢印）と円だけを重ねる。
 // 北が上で固定。敵の位置は出さない（読み合いが芯のため）。
-import { ROADS } from './southmap.js'
-import { ROADS2, TRAIL, BRIDGES2 } from './bigmap.js'
-import { planeAt, DROP } from './plane.js'
+import { ROADS } from './southmap.js?v=mwu9lb26'
+import { L as tr } from './i18n.js?v=mwu9lb26'
+import { ROADS2, TRAIL, BRIDGES2 } from './bigmap.js?v=mwu9lb26'
+import { planeAt, DROP } from './plane.js?v=mwu9lb26'
 
 // 島全体（50人用に広げた 2026-11-23）は 1m=0.8px で1枚に描いておき、画面には自分のまわり VIEW m だけを切り出して見せる
 const X0 = -340, X1 = 340, Z0 = -96, Z1 = 608, KB = 0.8, VIEW = 230
@@ -105,6 +106,7 @@ export class Minimap {
       const [cx, cz] = px(z.x, z.z), r = z.r * k
       x.save(); x.beginPath(); x.rect(0, 0, c.width, c.height); x.arc(cx, cz, r, 0, Math.PI * 2, true); x.fillStyle = 'rgba(176,64,40,0.2)'; x.fill('evenodd'); x.restore()
       x.beginPath(); x.arc(cx, cz, r, 0, Math.PI * 2); x.strokeStyle = '#a3331f'; x.lineWidth = 2.4 * d; x.stroke()
+      if (z.x1 != null) { const [fx, fz] = px(z.x1, z.z1); x.beginPath(); x.arc(fx, fz, Math.max(3 * d, z.r1 * k), 0, Math.PI * 2); x.setLineDash([5 * d, 4 * d]); x.strokeStyle = '#7a2616'; x.lineWidth = 1.6 * d; x.stroke(); x.setLineDash([]) }
     }
     const RD = g.raid // WRECK ISLE の爆撃の赤い円
     if (RD) { const [rx, rz] = px(RD.x, RD.z); x.beginPath(); x.arc(rx, rz, RD.r * k, 0, Math.PI * 2); x.fillStyle = 'rgba(220,30,20,0.38)'; x.fill(); x.strokeStyle = '#c0180c'; x.lineWidth = 2 * d; x.stroke() }
@@ -135,9 +137,9 @@ export class Minimap {
     }
     x.strokeStyle = INK; x.lineWidth = 3 * d; x.strokeRect(1.5 * d, 1.5 * d, c.width - 3 * d, c.height - 3 * d)
     x.fillStyle = INK; x.font = `700 ${Math.round(15 * d)}px "Zen Kaku Gothic New","Hiragino Sans",sans-serif`; x.textAlign = 'left'
-    x.fillText('北', 12 * d, 24 * d)
+    x.fillText(tr('北', 'N'), 12 * d, 24 * d)
     x.beginPath(); x.moveTo(26 * d, 12 * d); x.lineTo(30 * d, 24 * d); x.lineTo(22 * d, 24 * d); x.closePath(); x.fill()
-    if (g.dropOn && pl && pl.air && pl.air.mode === 'plane') { x.textAlign = 'center'; x.font = `700 ${Math.round(17 * d)}px "Zen Kaku Gothic New","Hiragino Sans",sans-serif`; x.fillText(matchMedia('(pointer: coarse)').matches ? '右下のボタンで飛び降りる' : `${g.keymap.label('veh')} で降りる　${g.keymap.label('map')} で地図をしまう`, c.width / 2, c.height - 14 * d) }
+    if (g.dropOn && pl && pl.air && pl.air.mode === 'plane') { x.textAlign = 'center'; x.font = `700 ${Math.round(17 * d)}px "Zen Kaku Gothic New","Hiragino Sans",sans-serif`; x.fillText(matchMedia('(pointer: coarse)').matches ? tr('右下のボタンで飛び降りる', 'Tap the bottom-right button to jump') : tr(`${g.keymap.label('veh')} で降りる　${g.keymap.label('map')} で地図をしまう`, `${g.keymap.label('veh')} to jump   ${g.keymap.label('map')} to close the map`), c.width / 2, c.height - 14 * d) }
   }
   draw() {
     this.bigDraw()
@@ -155,7 +157,8 @@ export class Minimap {
       x.beginPath(); x.rect(0, 0, w, h); x.arc(cx, cz, r, 0, Math.PI * 2, true); x.fillStyle = 'rgba(176,64,40,0.22)'; x.fill('evenodd')
       x.beginPath(); x.arc(cx, cz, r, 0, Math.PI * 2); x.strokeStyle = '#a3331f'; x.lineWidth = 1.6 * d; x.stroke()
       // 次の円（最後に残る円）: 点線
-      x.beginPath(); x.arc(cx, cz, Math.max(2 * d, z.r1 * this.k * d), 0, Math.PI * 2); x.setLineDash([3 * d, 2 * d]); x.strokeStyle = '#7a2616'; x.lineWidth = 1.2 * d; x.stroke(); x.setLineDash([])
+      const [fx, fz] = z.x1 != null ? this.px(z.x1, z.z1) : [cx, cz] // 最後の円は今の円の真ん中とは別の所（円は最初が島ぜんぶ 2026-11-24）
+      x.beginPath(); x.arc(fx, fz, Math.max(2 * d, z.r1 * this.k * d), 0, Math.PI * 2); x.setLineDash([3 * d, 2 * d]); x.strokeStyle = '#7a2616'; x.lineWidth = 1.2 * d; x.stroke(); x.setLineDash([])
       x.restore()
     }
     if (g.raid) { const RD = g.raid, [rx, rz] = this.px(RD.x, RD.z); x.save(); x.beginPath(); x.rect(3 * d, 3 * d, w - 6 * d, h - 6 * d); x.clip(); x.beginPath(); x.arc(rx, rz, RD.r * this.k * d, 0, Math.PI * 2); x.fillStyle = 'rgba(220,30,20,0.4)'; x.fill(); x.strokeStyle = '#c0180c'; x.lineWidth = 1.6 * d; x.stroke(); x.restore() }
@@ -181,7 +184,7 @@ export class Minimap {
     x.strokeStyle = INK; x.lineWidth = Math.max(1, d * 1.4); x.strokeRect(1.5, 1.5, w - 3, h - 3)
     x.lineWidth = Math.max(1, d * 0.6); x.strokeRect(4.5 * d, 4.5 * d, w - 9 * d, h - 9 * d)
     x.fillStyle = INK; x.font = `700 ${Math.round(11 * d)}px "Zen Kaku Gothic New","Hiragino Sans",sans-serif`; x.textAlign = 'center'
-    x.fillText('北', w - 15 * d, 20 * d)
+    x.fillText(tr('北', 'N'), w - 15 * d, 20 * d)
     x.beginPath(); x.moveTo(w - 15 * d, 22 * d); x.lineTo(w - 12 * d, 30 * d); x.lineTo(w - 18 * d, 30 * d); x.closePath(); x.fill()
   }
 }

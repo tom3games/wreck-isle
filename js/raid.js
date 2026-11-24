@@ -2,7 +2,8 @@
 // 60〜90秒に1回、円の中のどこかに赤い円。6秒の予告（サイレン・空が赤みがかる・地面の赤い輪・地図の赤い円）→ 15秒ほど爆弾が降る
 // 当たると車は大きく壊れて吹っ飛び、歩いている人はほぼやられる。円の外は安全
 import * as THREE from 'three'
-import { DROP } from './plane.js'
+import { L as tr } from './i18n.js?v=mwu9lb26'
+import { DROP } from './plane.js?v=mwu9lb26'
 
 export const RAID = { warn: 6, bomb: 15, rate: 2.2, R: [32, 48], every: [60, 90], blast: 8 }
 
@@ -42,7 +43,7 @@ export const raidMethods = {
         this.raid = { ...c, t: 0, phase: 'warn', acc: 0 }; this.raidN++; this.ev.raids = (this.ev.raids || 0) + 1
         this.sound('siren', { x: this.camera.position.x, y: 0, z: this.camera.position.z }, 0.7)
         const me = this.me, d = me.alive ? Math.hypot(me.x - c.x, me.z - c.z) : 1e9
-        this.toast(d < c.r + 4 ? '爆撃が来る　赤い円から出ろ' : '赤い円に爆撃が来る')
+        this.toast(d < c.r + 4 ? tr('爆撃が来る　赤い円から出ろ', 'Air raid incoming — get out of the red circle') : tr('赤い円に爆撃が来る', 'Air raid incoming on the red circle'))
       }
     }
     const R = this.raid; if (!R) return

@@ -1,11 +1,12 @@
 // 南の低地: 住宅地・川と橋・林と草・島をひと回りする道・給油所・畑・南の海岸（2026-11-22）
 // 地形の形は southmap.js（area.js の terrainH と同じ数字）。当たりは見た目と同じ箱データ（level.B）か、見た目の形から作る（colFromMesh）
 import * as THREE from 'three'
+import { L as tr } from './i18n.js?v=mwu9lb26'
 import { mergeGeometries } from '../vendor/jsm/utils/BufferGeometryUtils.js'
-import { mat } from './level.js'
-import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js'
-import { colFromMesh } from './colmesh.js'
-import { RING, STREET_Z, ROADS, BRIDGES, WOODS, riverC, riverW, riverEdge, coastD, roadDist, PASS_X } from './southmap.js'
+import { mat } from './level.js?v=mwu9lb26'
+import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwu9lb26'
+import { colFromMesh } from './colmesh.js?v=mwu9lb26'
+import { RING, STREET_Z, ROADS, BRIDGES, WOODS, riverC, riverW, riverEdge, coastD, roadDist, PASS_X } from './southmap.js?v=mwu9lb26'
 
 const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 }
 const col = (world, x0, y0, z0, x1, y1, z1, kind = 'solid') => world.add({ min: [Math.min(x0, x1), y0, Math.min(z0, z1)], max: [Math.max(x0, x1), y1, Math.max(z0, z1)], kind })
@@ -112,7 +113,7 @@ function bridges(level, scene, world, B, prop) {
           }
         }
       }
-      for (const [zz, rot] of [[z0 + 0.25, Math.PI], [z1 - 0.25, 0]]) { B(x - hw, 4.2, zz - 0.15, x + hw, 4.5, zz + 0.15, 'steelGreen'); level.sign(x, 3.7, zz + (rot ? 0.17 : -0.17), rot ? 0 : Math.PI, '中ノ橋', 3.4, 0.7) }
+      for (const [zz, rot] of [[z0 + 0.25, Math.PI], [z1 - 0.25, 0]]) { B(x - hw, 4.2, zz - 0.15, x + hw, 4.5, zz + 0.15, 'steelGreen'); level.sign(x, 3.7, zz + (rot ? 0.17 : -0.17), rot ? 0 : Math.PI, tr('中ノ橋', 'NAKANO BRIDGE'), 3.4, 0.7) }
       for (const [px, pz] of [[x - hw - 0.7, z0 - 1], [x + hw + 0.7, z1 + 1]]) prop('street_lamp_01', px, 0, pz, 0, ['y', 4.6])
     }
     // 橋のたもと: 車止めと標識の代わりの石
@@ -506,7 +507,7 @@ function gasStation(level, scene, world, B, prop, chop) {
   B(cx - 1.2, 5.1, cz - 1.2, cx + 10.2, 5.5, cz + 8.2, 'canopy')
   B(cx - 1.25, 5.1, cz - 1.25, cx + 10.25, 5.28, cz - 1.15, 'pumpRed', { nocol: true }); B(cx - 1.25, 5.1, cz + 8.15, cx + 10.25, 5.28, cz + 8.25, 'pumpRed', { nocol: true })
   for (const lx of [cx + 1.5, cx + 4.5, cx + 7.5]) for (const lz of [cz + 1.5, cz + 5.5]) B(lx - 0.6, 5.06, lz - 0.2, lx + 0.6, 5.1, lz + 0.2, 'lampPanel', { nocol: true })
-  level.sign(cx + 4.5, 5.85, cz - 1.3, Math.PI, '西浦給油所', 5.4, 0.9)
+  level.sign(cx + 4.5, 5.85, cz - 1.3, Math.PI, tr('西浦給油所', 'NISHIURA GAS'), 5.4, 0.9)
   // 給油機2つ（島）と、その奥のドラム缶の山
   for (const px of [cx + 2.5, cx + 6.5]) { B(px - 0.5, 0, cz + 2.8, px + 0.5, 0.2, cz + 4.4, 'kerb'); B(px - 0.3, 0.2, cz + 3.2, px + 0.3, 1.7, cz + 4.0, 'pumpRed'); B(px - 0.25, 1.1, cz + 2.98, px + 0.25, 1.5, cz + 3.2, 'black', { nocol: true }) }
   for (const [dx, dz] of [[0.4, 0.6], [1.15, 0.6], [1.9, 0.6], [0.8, 1.35], [1.55, 1.35], [1.2, 2.1]]) level.drum(cx + 11.2 + dx, cz + 4.2 + dz)

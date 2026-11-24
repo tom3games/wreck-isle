@@ -1,8 +1,9 @@
 // 乗っている人（あなた・CPU）。車を降りると人として走れる。人は無力: 攻撃できず、車に当たると吹っ飛んですぐやられる
 // 負け: 人がやられる（車が爆発した時に乗っていた・はねられた・円の外・海）
 import * as THREE from 'three'
-import { moveBody } from './collide.js'
-import { Char, LOOKS } from './chars.js'
+import { L as tr, EN } from './i18n.js?v=mwu9lb26'
+import { moveBody } from './collide.js?v=mwu9lb26'
+import { Char, LOOKS } from './chars.js?v=mwu9lb26'
 
 export const FOOT = { hp: 60, run: 4.4, dash: 6.2, cpuRun: 5.4, reach: 3.4 } // 歩き 4.4・Shift で 6.2（FUSE ISLE と同じ）
 const LK = ['player', 'fisher', 'hoodie', 'work', 'elder', 'jersey']
@@ -30,7 +31,7 @@ export const peopleMethods = {
     c.driver = p; p.car = c; p.char.root.visible = !!c.T.bike; if (p.dive) this.endDive(p); if (this.t > 0) this.ev.enters++
     if (c.item == null && p.heldItem) { c.item = p.heldItem } p.heldItem = null
     this.sound('latch', c, 0.6)
-    if (p.isPlayer) this.toast(`${c.T.name}　${c.T.note}`)
+    if (p.isPlayer) this.toast(EN ? `${c.T.en} — ${c.T.noteEn}` : `${c.T.name}　${c.T.note}`)
     if (c.T.bike) this.sound('bell', c, 0.5)
     return true
   },
@@ -99,7 +100,7 @@ export const peopleMethods = {
   },
   endDive(p) { if (!p.dive) return; p.dive = null; p.diveReady = this.t + 1.2; p.body.h = 1.75; p.char.endDive() },
   // ぎりぎりの回避（FUSE ISLE と同じ演出: 青い「回避」と、全体の音を少しこもらせる）
-  nearMiss(p) { if (this.t - (p.avoidAt || -9) < 1.2) return; p.avoidAt = this.t; this.ev.avoids = (this.ev.avoids || 0) + 1; if (p === this.me) { this.toast('回避', 'avoid'); if (window.Snd && window.Snd.muffle) window.Snd.muffle(1.2) } },
+  nearMiss(p) { if (this.t - (p.avoidAt || -9) < 1.2) return; p.avoidAt = this.t; this.ev.avoids = (this.ev.avoids || 0) + 1; if (p === this.me) { this.toast(tr('回避', 'DODGE'), 'avoid'); if (window.Snd && window.Snd.muffle) window.Snd.muffle(1.2) } },
   // 車が人に当たる: 速ければ吹っ飛ばしてすぐやられる
   personHits() {
     for (const p of this.ps) {
@@ -144,11 +145,12 @@ export const peopleMethods = {
     if (by && by !== p) by.kills++
     if (p.car) { const c = p.car; Object.assign(p.body, { x: c.x, y: c.y, z: c.z, vx: 0, vy: 0, vz: 0 }); c.driver = null; p.car = null }
     else { p.char.root.visible = true; p.char.die() }
-    const who = p === this.me ? 'あなた' : p.name
-    const txt = how === 'boom' ? (by && by !== p ? `${by.name} が ${who} を車ごと爆破` : `${who} が車ごと爆発`) : how === 'ram' ? (by ? `${by.name} が ${who} をはねた` : `${who} がはねられた`) : how === 'zone' ? `${who} が円の外で力尽きた` : how === 'sea' ? `${who} が海に落ちた` : how === 'raid' || (how === 'boom' && !by && !p.car) ? `${who} が爆撃にやられた` : by ? `${by.name} が ${who} を倒した` : `${who} がやられた`
+    const who = p === this.me ? tr('あなた', 'You') : p.name
+    const whom = p === this.me ? 'you' : who // 英語: 目的語は小文字
+    const txt = EN ? (how === 'boom' ? (by && by !== p ? `${by.name} blew up ${whom}` : `${who} blew up`) : how === 'ram' ? (by ? `${by.name} ran over ${whom}` : `${who} got run over`) : how === 'zone' ? `${who} gave out outside the circle` : how === 'sea' ? `${who} fell into the sea` : how === 'raid' || (how === 'boom' && !by && !p.car) ? `${who} got hit by the air raid` : by ? `${by.name} took out ${whom}` : `${who} is out`) : how === 'boom' ? (by && by !== p ? `${by.name} が ${who} を車ごと爆破` : `${who} が車ごと爆発`) : how === 'ram' ? (by ? `${by.name} が ${who} をはねた` : `${who} がはねられた`) : how === 'zone' ? `${who} が円の外で力尽きた` : how === 'sea' ? `${who} が海に落ちた` : how === 'raid' || (how === 'boom' && !by && !p.car) ? `${who} が爆撃にやられた` : by ? `${by.name} が ${who} を倒した` : `${who} がやられた`
     this.feed.unshift({ t: this.t, txt })
     if (p === this.me) { this.slowT = 1.1; this.sound('lose', p, 0.6, { delay: 0.6 }) }
-    else if (by === this.me) this.toast(how === 'ram' ? 'はねた' : '爆破')
+    else if (by === this.me) this.toast(how === 'ram' ? tr('はねた', 'RUN OVER') : tr('爆破', 'BLOWN UP'))
     const alive = this.ps.filter(x => x.alive)
     if (alive.length <= 1 && !this.over) { this.over = true; this.winner = alive[0] || null; this.overT = 0; this.decidedAt = this.t; if (this.winner === this.me) this.sound('win', this.winner, 0.7, { delay: 0.8 }) }
   },

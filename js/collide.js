@@ -13,6 +13,40 @@ export function roofAt(world, x, z) {
   return h
 }
 
+// 屋根（切妻）を三角の柱として扱う当たり（2026-11-24 本人「屋根の当たり判定がおかしい」）。
+// 見た目の屋根の板と同じ形: 軒（端）の高さ base+0.12 から棟（真ん中）の base+0.12+rh まで。
+// 体（円 r・足元 yb・頭 yt）が屋根の中に入っていて、足元から step より高い面なら、一番近い外へ横に押し出す。
+// 妻（三角の面）からは棟の向きに、坂からは段差として乗れる所まで下（軒の側）へ出す
+export function roofSurf(r, x, z) {
+  const off = Math.abs((r.ridge === 'x' ? z : x) - r.c)
+  return r.base + 0.12 + r.rh * Math.max(0, 1 - off / r.half)
+}
+export function roofPush(world, c, step) {
+  let hit = 0
+  for (const r of world.roofs || []) {
+    const R = c.r
+    if (c.x < r.x0 - R || c.x > r.x1 + R || c.z < r.z0 - R || c.z > r.z1 + R) continue
+    const yt = c.y + c.h; if (yt <= r.base + 0.02) continue // 軒の下を通る
+    const along = r.ridge === 'x', a = along ? c.x : c.z, a0 = along ? r.x0 : r.z0, a1 = along ? r.x1 : r.z1
+    const q = along ? c.z : c.x, side = q - r.c, off = Math.abs(side)
+    // 円のうち一番棟に近い所の屋根の高さ（円が妻の外にはみ出していれば、はみ出しの分だけ角で浅く見る）
+    const offIn = Math.max(0, off - R), sTop = r.base + 0.12 + r.rh * Math.max(0, 1 - offIn / r.half)
+    if (offIn > r.half) continue
+    if (c.y >= sTop - step) continue // 屋根の上（または段差で乗れる高さ）
+    // 出口: 妻の外（棟の向き）・坂を下って乗れる高さの所・軒の外
+    const need = c.y + step - r.base - 0.12, offNeed = need > 0 ? r.half * (1 - Math.min(1, need / r.rh)) : r.half
+    const dA0 = a - (a0 - R), dA1 = (a1 + R) - a, dQ = Math.max(0, offNeed + R - off) + 0.01
+    const m = Math.min(dA0, dA1, dQ)
+    let nx = 0, nz = 0
+    if (m === dQ) { const sg = side >= 0 ? 1 : -1; if (along) { c.z += sg * dQ; nz = sg } else { c.x += sg * dQ; nx = sg } }
+    else if (m === dA0) { if (along) { c.x -= dA0; nx = -1 } else { c.z -= dA0; nz = -1 } }
+    else { if (along) { c.x += dA1; nx = 1 } else { c.z += dA1; nz = 1 } }
+    const vn = (c.vx || 0) * nx + (c.vz || 0) * nz; if (vn < 0) { c.vx -= vn * nx; c.vz -= vn * nz }
+    c.hitWall = (c.hitWall || 0) + 1; hit++
+  }
+  return hit
+}
+
 export class World {
   constructor() { this.boxes = []; this.grid = new Map(); this.cell = 4; this.terrain = null }
   H(x, z) { return this.terrain ? this.terrain(x, z) : -1e9 }
@@ -48,6 +82,7 @@ export function moveBody(world, c, dt) {
     const px = c.x, pz = c.z
     c.x += c.vx * h; c.z += c.vz * h
     pushOut(world, c)
+    if (world.roofs) roofPush(world, c, STEP)
     // 急な地面（崖）は壁として止める
     if (world.terrain) {
       const th = world.H(c.x, c.z)
@@ -103,6 +138,7 @@ function settleY(world, c) {
     else if (b.min[1] >= c.y + c.h * 0.5) ceil = Math.min(ceil, b.min[1])
   }
   const th = world.H(c.x, c.z); if (th > ground && th <= c.y + 0.9) ground = th
+  if (world.roofs) { const rf = roofAt(world, c.x, c.z); if (rf > ground && rf <= c.y + STEP + 1e-4) ground = rf } // 屋根の坂に立つ
   if (c.y + c.h > ceil && c.vy > 0) { c.y = ceil - c.h; c.vy = 0 }
   if (c.y <= ground + 1e-3) {
     if (c.vy <= 0.01 || c.y < ground) {

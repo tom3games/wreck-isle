@@ -3,8 +3,9 @@
 // 主（ホスト）が全員の降下を計算し、参加者は air の状態（0 地上・1 機内・2 落下・3 傘）を受け取って描くだけ。
 // WRECK ISLE 用に fuse-isle の drop.js を写した物。降り先は車の置き場（this は Game）
 import * as THREE from 'three'
-import { moveBody } from './collide.js'
-import { DROP, planeAt, makePlane, makeChute } from './plane.js'
+import { L as tr } from './i18n.js?v=mwu9lb26'
+import { moveBody } from './collide.js?v=mwu9lb26'
+import { DROP, planeAt, makePlane, makeChute } from './plane.js?v=mwu9lb26'
 
 const wrap = a => Math.atan2(Math.sin(a), Math.cos(a))
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v))
@@ -171,9 +172,9 @@ export const dropMethods = {
     if (!A || !f.alive || (this.bigMap && A.mode === 'plane')) { el.classList.remove('on'); return }
     let h = ''
     const key = 'F'
-    if (A.mode === 'plane') h = `<kbd>${key}</kbd>降りる<i>進路の終わりまで あと ${Math.max(0, Math.ceil(DROP.T - this.t))}秒</i>`
-    else if (A.mode === 'fall') h = `<kbd>${key}</kbd>傘を開く<i>高さ ${Math.max(0, Math.round(f.body.y - Math.max(0, this.world.H(f.body.x, f.body.z))))}m・${DROP.openAlt}m で自動</i>`
-    else h = `<i>高さ ${Math.max(0, Math.round(f.body.y - Math.max(0, this.world.H(f.body.x, f.body.z))))}m</i>`
+    if (A.mode === 'plane') h = tr(`<kbd>${key}</kbd>降りる<i>進路の終わりまで あと ${Math.max(0, Math.ceil(DROP.T - this.t))}秒</i>`, `<kbd>${key}</kbd>Jump<i>${Math.max(0, Math.ceil(DROP.T - this.t))}s until the end of the route</i>`)
+    else if (A.mode === 'fall') h = tr(`<kbd>${key}</kbd>傘を開く<i>高さ ${Math.max(0, Math.round(f.body.y - Math.max(0, this.world.H(f.body.x, f.body.z))))}m・${DROP.openAlt}m で自動</i>`, `<kbd>${key}</kbd>Open chute<i>${Math.max(0, Math.round(f.body.y - Math.max(0, this.world.H(f.body.x, f.body.z))))}m · auto at ${DROP.openAlt}m</i>`)
+    else h = `<i>${tr('高さ ', '')}${Math.max(0, Math.round(f.body.y - Math.max(0, this.world.H(f.body.x, f.body.z))))}m</i>`
     if (el._h !== h) { el.innerHTML = h; el._h = h }
     el.classList.add('on')
   },

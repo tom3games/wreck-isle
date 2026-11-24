@@ -73,11 +73,13 @@ export class Driver {
     const G = this.g.grid, d = Math.hypot(tx - x, tz - z)
     if (d < 45 && G.clear(x, z, tx, tz)) { this.route = null; return [tx, tz] }
     const t = this.g.t
-    if (!this.route || t - this.routeT > 2 || Math.hypot(this.routeEnd[0] - tx, this.routeEnd[1] - tz) > 10) {
+    // 道さがしは重いので、1コマに1回まで（全員で順番）・同じ CPU は 3秒に1回まで（2026-11-24 遊んでいる最中のカクつき）
+    if ((!this.route || t - this.routeT > 3 || Math.hypot(this.routeEnd[0] - tx, this.routeEnd[1] - tz) > 12) && this.g.pathTake()) {
       this.routeT = t; this.routeEnd = [tx, tz]; this.route = G.route(x, z, tx, tz)
       if (!this.route) { this.noRoute = true; return [tx, tz] }
     }
     const R = this.route
+    if (!R || !R.length) return [tx, tz] // 順番待ちの間はまっすぐ向かう
     while (R.length > 1 && Math.hypot(R[0][0] - x, R[0][1] - z) < 5) R.shift()
     let k = 0
     for (let i = Math.min(R.length - 1, 8); i > 0; i--) if (Math.hypot(R[i][0] - x, R[i][1] - z) < 18 && G.clear(x, z, R[i][0], R[i][1])) { k = i; break }
@@ -157,11 +159,14 @@ export class Driver {
     if (g.raid) { const RD = g.raid, dx = B.x - RD.x, dz = B.z - RD.z, d = Math.hypot(dx, dz) || 1; if (d < RD.r + 5) { tx = RD.x + dx / d * (RD.r + 12); tz = RD.z + dz / d * (RD.r + 12) } }
     // 歩きは人の升目（0.5m・戸口も通れる）で道をさがす
     const t = g.t
-    if (!this.fp || t - this.fpT > 1.2 || Math.hypot(this.fpEnd[0] - tx, this.fpEnd[1] - tz) > 3) {
-      this.fpT = t; this.fpEnd = [tx, tz]; this.fp = Math.hypot(tx - B.x, tz - B.z) < 4 ? [[tx, tz]] : g.nav.path(B.x, B.z, tx, tz)
+    const near = Math.hypot(tx - B.x, tz - B.z) < 4 || g.grid.clear(B.x, B.z, tx, tz) // まっすぐ行ける時は道をさがさない
+    if (near) { this.fp = [[tx, tz]]; this.fpT = t; this.fpEnd = [tx, tz] }
+    else if ((!this.fp || t - this.fpT > 2.5 || Math.hypot(this.fpEnd[0] - tx, this.fpEnd[1] - tz) > 4) && g.pathTake()) {
+      this.fpT = t; this.fpEnd = [tx, tz]; this.fp = g.nav.path(B.x, B.z, tx, tz)
       if (this.fp && !this.fp.length) this.fp = [[tx, tz]] // 同じ升の中（道が0点）
       if (!this.fp) { if (G) (this.skip || (this.skip = new Set())).add(G); this.footGoal = null; this.fp = [[tx, tz]]; this.fpT = t + 1 }
     }
+    if (!this.fp) { this.fp = [[tx, tz]]; this.fpEnd = [tx, tz]; this.fpT = t - 9 } // 順番待ちの間はまっすぐ（次のコマで道をさがす）
     const P = this.fp
     while (P.length > 1 && Math.hypot(P[0][0] - B.x, P[0][1] - B.z) < 1.2) P.shift()
     const q = P[0], d = Math.hypot(q[0] - B.x, q[1] - B.z) || 1

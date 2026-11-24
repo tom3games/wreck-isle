@@ -2,11 +2,11 @@
 // 地形は bigmap.js。建物の部品（house2・apartment・shop・汚れ）は今の島と同じ物を使う
 import * as THREE from 'three'
 import { mergeGeometries } from '../vendor/jsm/utils/BufferGeometryUtils.js'
-import { mat } from './level.js'
-import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js'
-import { house2, apartment, grime, grimeAtlas, makeGrass } from './south.js'
-import { shop } from './area.js'
-import { PADS, ROADS2, TRAIL, BRIDGES2, SUMMIT, LAKE, landH, roadD2, landCoastD, lakeD, inPad } from './bigmap.js'
+import { mat } from './level.js?v=mwu9lb26'
+import { cedarGeo, broadGeo, leafTex, fishingBoat } from './props.js?v=mwu9lb26'
+import { house2, apartment, grime, grimeAtlas, makeGrass } from './south.js?v=mwu9lb26'
+import { shop } from './area.js?v=mwu9lb26'
+import { PADS, ROADS2, TRAIL, BRIDGES2, SUMMIT, LAKE, landH, roadD2, landCoastD, lakeD, inPad } from './bigmap.js?v=mwu9lb26'
 
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
 

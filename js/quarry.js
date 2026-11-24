@@ -1,9 +1,10 @@
 // 東の採石場: 段の掘り跡（地形は area.js）、砕石の工場とベルトコンベア、積み出し桟橋と運搬船、
 // 重機（ショベル・ダンプ）、現場事務所、仮設トイレ、火薬庫（中の火薬の箱は連鎖して爆発する）
 import * as THREE from 'three'
-import { colFromMesh } from './colmesh.js'
-import { mat } from './level.js'
-import { terrainH, QUARRY } from './area.js'
+import { L as tr } from './i18n.js?v=mwu9lb26'
+import { colFromMesh } from './colmesh.js?v=mwu9lb26'
+import { mat } from './level.js?v=mwu9lb26'
+import { terrainH, QUARRY } from './area.js?v=mwu9lb26'
 
 const yellow = () => new THREE.MeshStandardMaterial({ color: 0xd8a21c, roughness: 0.5, metalness: 0.2 })
 const steelM = () => new THREE.MeshStandardMaterial({ color: 0x6f7478, roughness: 0.55, metalness: 0.75 })
@@ -42,8 +43,8 @@ export function buildQuarry(level, scene, world) {
   // 仮設トイレ・三角コーン・看板・照明塔
   for (const [x, z] of [[46, 17.5], [47.3, 17.5]]) { box(scene, 1.1, 2.3, 1.1, new THREE.MeshStandardMaterial({ color: 0x2f6fb0, roughness: 0.5 }), x, 1.15, z); col(world, x - 0.55, 0, z - 0.55, x + 0.55, 2.3, z + 0.55) }
   for (const [x, z] of [[54, 9], [54, 13], [58, 16], [60, 16], [62, 16]]) cone(scene, x, z)
-  board(scene, 55.5, 2.2, 15.2, Math.PI, '発破作業中　立入禁止', 2.6, 0.9, '#c9301e')
-  board(scene, 89, 2.2, 21.2, Math.PI, '火薬庫　火気厳禁', 2.2, 0.8, '#c9301e')
+  board(scene, 55.5, 2.2, 15.2, Math.PI, tr('発破作業中　立入禁止', 'BLASTING — KEEP OUT'), 2.6, 0.9, '#c9301e')
+  board(scene, 89, 2.2, 21.2, Math.PI, tr('火薬庫　火気厳禁', 'EXPLOSIVES — NO FIRE'), 2.2, 0.8, '#c9301e')
   lightTower(scene, world, 64, 30); lightTower(scene, world, 96, 45)
   // 門と金網（人は止める・爆弾は通る）
   fence(scene, world, [[56, 14.2], [56, 30]]); fence(scene, world, [[56, 7.8], [56, -12]])
@@ -157,7 +158,7 @@ function office(level, scene, world, x, z) {
   for (let i = 0; i < n; i++) { const top = (i + 1) * ((h1 + 0.15) / n), za = z - 1.2 - (n - i) * run, zb = z - 1.2 - (n - i - 1) * run
     B(x + w - 2.0, 0, za, x + w - 0.6, top, zb, null, { vis: false }); B(x + w - 2.0, top - 0.05, za, x + w - 0.6, top, zb, 'rustMetal', { nocol: true }) }
   for (const sx of [x + w - 2.05, x + w - 0.55]) { const g = new THREE.BoxGeometry(0.06, 0.18, n * run * 1.25); g.rotateX(Math.atan2(h1 + 0.15, n * run)); g.translate(sx, (h1 + 0.15) / 2, z - 1.2 - n * run / 2); level.push('rustMetal', g) }
-  level.sign(x + w / 2, h2 - 0.6, z - 0.08, Math.PI, '西浦砕石　現場事務所', 5.5, 0.6)
+  level.sign(x + w / 2, h2 - 0.6, z - 0.08, Math.PI, tr('西浦砕石　現場事務所', 'NISHIURA QUARRY OFFICE'), 5.5, 0.6)
   // 中の机
   B(x + 3.5, 0, z + 2, x + 6.5, 0.75, z + 3.2, 'wood'); B(x + 3.5, h1 + 0.15, z + 2.2, x + 6, h1 + 0.9, z + 3.2, 'wood')
 }
@@ -183,8 +184,8 @@ function labelTex() {
   const c = document.createElement('canvas'); c.width = 256; c.height = 170; const g = c.getContext('2d')
   g.fillStyle = '#9a8460'; g.fillRect(0, 0, 256, 170)
   g.fillStyle = '#c9301e'; g.beginPath(); g.moveTo(128, 18); g.lineTo(200, 85); g.lineTo(128, 152); g.lineTo(56, 85); g.closePath(); g.fill()
-  g.fillStyle = '#fff'; g.font = '900 54px "Zen Kaku Gothic New", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('火', 128, 88)
-  g.fillStyle = '#2a2017'; g.font = '700 16px sans-serif'; g.fillText('取扱注意', 128, 160)
+  g.fillStyle = '#fff'; g.font = '900 54px "Zen Kaku Gothic New", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(tr('火', 'TNT'), 128, 88)
+  g.fillStyle = '#2a2017'; g.font = '700 16px sans-serif'; g.fillText(tr('取扱注意', 'HANDLE WITH CARE'), 128, 160)
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t
 }
 
@@ -198,7 +199,7 @@ function cone(scene, x, z) {
 function board(scene, x, y, z, ry, text, w, h, colr) {
   const c = document.createElement('canvas'); c.width = 1024; c.height = Math.round(1024 * h / w); const g = c.getContext('2d')
   g.fillStyle = '#f3f1ea'; g.fillRect(0, 0, c.width, c.height); g.strokeStyle = colr; g.lineWidth = 18; g.strokeRect(9, 9, c.width - 18, c.height - 18)
-  g.fillStyle = colr; g.font = `900 ${Math.round(c.height * 0.42)}px "Zen Kaku Gothic New", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, c.width / 2, c.height / 2)
+  g.fillStyle = colr; g.font = `900 ${Math.round(c.height * 0.42)}px "Zen Kaku Gothic New", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, c.width / 2, c.height / 2, c.width * 0.92)
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace
   const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, roughness: 0.6 })); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m)
   for (const s of [-1, 1]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, y + h / 2, 8), steelM()); p.position.set(x + s * w * 0.4 * Math.cos(ry), (y + h / 2) / 2 - 0.0, z - s * w * 0.4 * Math.sin(ry) + 0.03); scene.add(p) }
